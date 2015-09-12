@@ -45,6 +45,13 @@ import qualified BattleHack.Render as Render
 -- Functions
 --------------------------------------------------------------------------------------------------------------------------------------------
 -- |
+onanimate :: DrawingArea -> IO AppState -> IO Bool
+onanimate canvas stateref = do
+  widgetQueueDraw canvas
+  return True
+
+
+-- |
 ondraw :: IORef AppState -> Cairo.Render ()
 ondraw stateref = do
   state <- Cairo.liftIO $ readIORef stateref

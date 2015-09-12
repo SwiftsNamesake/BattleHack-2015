@@ -73,7 +73,7 @@ main = do
   canvas `on` draw              $ Events.ondraw stateref
 
   -- canvas `on` onaimate
-  
+  timeoutAdd (Events.onanimate canvas stateref) (1000 `div` fps)
 
   mainGUI
   where
@@ -81,6 +81,8 @@ main = do
     size@(sx:+sy)   = 40:+130
     indent          = sx*0.26
     mid             = sy*0.62
+
+    fps = 30
 
 
 -- | Just a little hello world snippet to make sure everything is set up properly.
