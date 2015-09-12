@@ -1,0 +1,8 @@
+Registering utf8-string-1.0.1.1...
+t\Desktop\BattleHack-2015\.cabal-sandbox\x86_64-windows-ghc-7.10.2\utf8-string-1.0.1.1-HWC8Qen5AZrArJxFQJuE72
+ng.hs, dist\dist-sandbox-10f20f72\build\Codec\Binary\UTF8\String.o )
+[2 of 5] Compiling Codec.Binary.UTF8.Generic ( Codec\Binary\UTF8\Generic.hs, dist\dist-sandbox-10f20f72\build\Codec\Binary\UTF8\Generic.o )
+[3 of 5] Compiling Data.String.UTF8 ( Data\String\UTF8.hs, dist\dist-sandbox-10f20f72\build\Data\String\UTF8.o )
+[4 of 5] Compiling Data.ByteString.Lazy.UTF8 ( Data\ByteString\Lazy\UTF8.hs, dist\dist-sandbox-10f20f72\build\Data\ByteString\Lazy\UTF8.o )
+[5 of 5] Compiling Data.ByteString.UTF8 ( Data\ByteString\UTF8.hs, dist\dist-sandbox-10f20f72\build\Data\ByteString\UTF8.o )
+In-place registering utf8-string-1.0.1.1...

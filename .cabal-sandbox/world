@@ -1,0 +1,3 @@
+cairo -any
+gtk2hs-buildtools -any
+gtk3 -any
