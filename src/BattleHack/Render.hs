@@ -26,10 +26,14 @@ module BattleHack.Render where
 -- We'll need these
 --------------------------------------------------------------------------------------------------------------------------------------------
 import Control.Monad (forM_)
+import Control.Lens
 import Data.Complex
 -- import qualified Data.Set as S
 
 import qualified Graphics.Rendering.Cairo as Cairo
+
+import BattleHack.Types
+import BattleHack.Lenses
 
 
 
@@ -88,18 +92,19 @@ keysteps = scanl1 (+) [0, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1]
 --------------------------------------------------------------------------------------------------------------------------------------------
 -- Functions
 --------------------------------------------------------------------------------------------------------------------------------------------
---------------------------------------------------------------------------------------------------------------------------------------------
+-- Vector utilities ------------------------------------------------------------------------------------------------------------------------
 -- |
 vectorise :: RealFloat f => (f -> f -> a) -> Complex f -> a
 vectorise f (x:+y) = f x y
 
 
--- |
+-- General rendering functions -------------------------------------------------------------------------------------------------------------
 -- |
 polygon :: [Complex Double] -> Cairo.Render ()
 polygon (p:oints) = vectorise Cairo.moveTo p >> forM_ (oints++[p]) (vectorise Cairo.lineTo)
 
 
+-- Piano -----------------------------------------------------------------------------------------------------------------------------------
 -- |
 key :: (Complex Double, Double, Double) -> Complex Double -> Int -> Cairo.Render ()
 key (size, indent, mid) origin i = do
@@ -109,10 +114,10 @@ key (size, indent, mid) origin i = do
 
 
 -- |
-claviature :: Cairo.Render ()
-claviature = do
+claviature :: PianoSettings -> Cairo.Render ()
+claviature settings = do
   forM_ (zip keysteps [0..11]) $ \(offx, ikey) -> do
-    key (size, indent, mid) ((ox+sx*offx):+oy) ikey
+    key (size', indent', mid') ((ox+sx*offx):+oy) ikey
     if ikey `elem` naturals
       then Cairo.setSourceRGBA 0.4 (1/7 * fromIntegral (ikey `mod` 7)) 0.75 1.0
       else Cairo.setSourceRGBA 0.0 0.0                                 0.00 1.0
@@ -123,7 +128,10 @@ claviature = do
     -- Cairo.stroke
     return ()
   where
-    origin@(ox:+oy) = 150:+150
-    size@(sx:+sy)   = 40:+130
-    indent          = sx*0.26
-    mid             = sy*0.62
+    (ox:+oy)        = settings ^. origin
+    size'@(sx:+sy)  = settings ^. keysize
+    indent'         = sx*settings ^. indent
+    mid'            = sy*settings ^. mid
+
+
+-- Menu ------------------------------------------------------------------------------------------------------------------------------------

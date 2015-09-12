@@ -28,12 +28,17 @@ module Main where
 import Control.Monad      (forM_)
 import Control.Concurrent (threadDelay)
 import Text.Printf
+import Data.IORef
+import Data.Complex
 
 import qualified Graphics.Rendering.Cairo as Cairo
 import           Graphics.UI.Gtk          as Gtk
 import           Graphics.UI.Gtk          (AttrOp(..), on)
 
+-- Internal module imports
+import           BattleHack.Types
 import qualified BattleHack.Render as Render
+import qualified BattleHack.Events as Events
 
 
 
@@ -43,29 +48,42 @@ import qualified BattleHack.Render as Render
 -- |
 main :: IO ()
 main = do
-  Gtk.initGUI
-  window <- Gtk.windowNew
-  frame  <- Gtk.frameNew
+  initGUI
+  window <- windowNew
+  frame  <- frameNew
 
-  -- Gtk.windowTitle := "Chordially"
-  Gtk.set window [Gtk.windowTitle := "Chordially"]
+  set window [windowTitle := "Chordially"]
 
-  canvas <- Gtk.drawingAreaNew
+  canvas <- drawingAreaNew
   containerAdd frame canvas
-  Gtk.set window [ Gtk.containerChild := frame ]
-  Gtk.windowSetDefaultSize window 720 480
+  set window [ containerChild := frame ]
+  windowSetDefaultSize window 720 480
 
   widgetAddEvents canvas [PointerMotionMask] -- MouseButton1Mask
-  Gtk.widgetShowAll window
+  widgetShowAll window
 
-  --
-  window `on` Gtk.deleteEvent $ (Cairo.liftIO $ Gtk.mainQuit >> return False)
-  canvas `on` Gtk.draw        $ (Render.claviature)
+  -- App state
+  stateref <- newIORef $ AppState { _piano = PianoSettings { _origin=150:+150, _keysize=40:+130, _indent=0.26, _mid=0.62 } }
 
-  Gtk.mainGUI
+  -- Register event handlers
+  window `on` deleteEvent       $ Events.ondelete stateref
+  window `on` motionNotifyEvent $ Events.onmousemotion stateref
+  window `on` buttonPressEvent  $ Events.onmousedown stateref
+  canvas `on` scrollEvent       $ Events.onwheelscrool stateref
+  canvas `on` draw              $ Events.ondraw stateref
+
+  -- canvas `on` onaimate
+  
+
+  mainGUI
+  where
+    origin@(ox:+oy) = 150:+150
+    size@(sx:+sy)   = 40:+130
+    indent          = sx*0.26
+    mid             = sy*0.62
 
 
--- |
+-- | Just a little hello world snippet to make sure everything is set up properly.
 goodbyeWorld :: IO ()
 goodbyeWorld = do
   putStrLn "Hello world!"

@@ -27,7 +27,7 @@ module BattleHack.Types where
 --------------------------------------------------------------------------------------------------------------------------------------------
 -- We'll need these
 --------------------------------------------------------------------------------------------------------------------------------------------
-
+import Data.Complex
 
 
 
@@ -35,3 +35,12 @@ module BattleHack.Types where
 -- Data
 --------------------------------------------------------------------------------------------------------------------------------------------
 -- |
+type Vector = Complex Double
+
+
+-- |
+data AppState = AppState { _piano :: PianoSettings }
+
+
+-- |
+data PianoSettings = PianoSettings { _origin :: Vector, _keysize :: Vector, _indent :: Double, _mid :: Double }
