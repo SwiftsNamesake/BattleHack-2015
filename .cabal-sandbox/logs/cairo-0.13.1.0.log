@@ -1,9 +1,0 @@
-[1 of 2] Compiling SetupWrapper     ( C:\Users\jonat\AppData\Local\Temp\cabal-tmp-6712\cairo-0.13.1.0\SetupWrapper.hs, C:\Users\jonat\AppData\Local\Temp\cabal-tmp-6712\cairo-0.13.1.0\dist\dist-sandbox-10f20f72\setup\SetupWrapper.o )
-[2 of 2] Compiling Main             ( C:\Users\jonat\AppData\Local\Temp\cabal-tmp-6712\cairo-0.13.1.0\dist\dist-sandbox-10f20f72\setup\setup.hs, C:\Users\jonat\AppData\Local\Temp\cabal-tmp-6712\cairo-0.13.1.0\dist\dist-sandbox-10f20f72\setup\Main.o )
-Linking C:\Users\jonat\AppData\Local\Temp\cabal-tmp-6712\cairo-0.13.1.0\dist/dist-sandbox-10f20f72\setup\setup.exe ...
-[1 of 2] Compiling Gtk2HsSetup      ( Gtk2HsSetup.hs, dist\setup-wrapper\Gtk2HsSetup.o )
-[2 of 2] Compiling Main             ( SetupMain.hs, dist\setup-wrapper\Main.o )
-Linking dist/setup-wrapper\setup.exe ...
-Configuring cairo-0.13.1.0...
-setup.exe: The pkg-config package 'cairo' version >=1.2.0 is required but it
-could not be found.
