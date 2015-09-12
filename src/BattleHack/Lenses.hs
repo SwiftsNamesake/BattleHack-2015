@@ -61,3 +61,8 @@ indent f s = (\new -> s { _indent=new }) `fmap` f (_indent s)
 -- |
 mid :: Lens PianoSettings PianoSettings Double Double
 mid f s = (\new -> s { _mid=new }) `fmap` f (_mid s)
+
+
+-- |
+active :: Lens PianoSettings PianoSettings (Maybe (Int, Bool)) (Maybe (Int, Bool))
+active f s = (\new -> s { _active=new }) `fmap` f (_active s)

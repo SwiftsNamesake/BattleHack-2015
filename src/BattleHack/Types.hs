@@ -39,8 +39,21 @@ type Vector = Complex Double
 
 
 -- |
-data AppState = AppState { _piano :: PianoSettings }
+data KeyLayout = KeyLeft | KeyRight | KeyBoth | KeyAccidental deriving (Show)
 
 
 -- |
-data PianoSettings = PianoSettings { _origin :: Vector, _keysize :: Vector, _indent :: Double, _mid :: Double }
+-- data Note = C Pitch | D Pitch | E Pitch | F Pitch | G Pitch | A Pitch | B Pitch deriving (Show)
+-- data Pitch = Sharp | Flat | Natural                                             deriving (Show)
+
+
+-- |
+data AppState = AppState { _piano :: PianoSettings } deriving (Show)
+
+
+-- |
+data PianoSettings = PianoSettings { _origin :: Vector,
+                                    _keysize :: Vector,
+                                    _indent  :: Double,
+                                    _mid     :: Double,
+                                    _active  :: Maybe (Int, Bool) } deriving (Show)

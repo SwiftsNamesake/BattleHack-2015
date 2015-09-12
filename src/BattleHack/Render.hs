@@ -34,28 +34,13 @@ import qualified Graphics.Rendering.Cairo as Cairo
 
 import BattleHack.Types
 import BattleHack.Lenses
-
-
-
---------------------------------------------------------------------------------------------------------------------------------------------
--- Types
---------------------------------------------------------------------------------------------------------------------------------------------
--- |
-data KeyLayout = KeyLeft | KeyRight | KeyBoth | KeyAccidental
-
+import BattleHack.Piano
 
 
 --------------------------------------------------------------------------------------------------------------------------------------------
 -- Data
 --------------------------------------------------------------------------------------------------------------------------------------------
--- |
-naturals :: Integral n => [n]
-naturals = [0, 2, 4, 5, 7, 9, 11]
 
-
--- |
-accidentals :: Integral n => [n]
-accidentals = [1, 3, 6, 8, 10]
 
 
 -- |
@@ -76,16 +61,6 @@ layout (sx:+sy) indent mid KeyAccidental = [(sx-indent):+0, (sx-indent):+mid, (s
     lm = 0:+mid  -- Left middle
     rm = sx:+mid -- Right middle
 
-
-
--- |
-chordlayout :: [KeyLayout]
-chordlayout = [KeyRight, KeyAccidental, KeyBoth, KeyAccidental, KeyLeft, KeyRight, KeyAccidental, KeyBoth, KeyAccidental, KeyBoth, KeyAccidental, KeyLeft]
-
-
--- | Horizontal offset for each key in the octave, relative to the very first key
-keysteps :: RealFloat r => [r]
-keysteps = scanl1 (+) [0, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1]
 
 
 

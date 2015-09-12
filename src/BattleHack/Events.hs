@@ -45,7 +45,7 @@ import qualified BattleHack.Render as Render
 -- Functions
 --------------------------------------------------------------------------------------------------------------------------------------------
 -- |
-onanimate :: DrawingArea -> IO AppState -> IO Bool
+onanimate :: DrawingArea -> IORef AppState -> IO Bool
 onanimate canvas stateref = do
   widgetQueueDraw canvas
   return True
@@ -84,9 +84,9 @@ onmousedown stateref = do
 onwheelscrool :: IORef AppState -> EventM EScroll Bool
 onwheelscrool stateref = do
   direction <- eventScrollDirection
-  Cairo.liftIO $ modifyIORef stateref (piano.origin %~ (+ deltaX direction))
+  Cairo.liftIO $ modifyIORef stateref (piano.origin %~ panX direction)
   Cairo.liftIO $ print direction
   return False
   where
-    deltaX ScrollUp   = (-5.0):+0.0
-    deltaX ScrollDown = ( 5.0):+0.0
+    panX ScrollUp   = (+ ((-5.0):+0.0))
+    panX ScrollDown = (+ (( 5.0):+0.0))

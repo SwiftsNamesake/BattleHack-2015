@@ -54,7 +54,8 @@ executable BattleHack2015
   other-modules:       BattleHack.Render,
                        BattleHack.Events,
                        BattleHack.Types
-                       BattleHack.Lenses
+                       BattleHack.Lenses,
+                       BattleHack.Piano
 
   -- LANGUAGE extensions used by modules in this package.
   -- other-extensions:
@@ -63,7 +64,8 @@ executable BattleHack2015
   build-depends:       base >=4.8 && <4.9,
                        gtk3,
                        cairo,
-                       lens
+                       lens,
+                       OpenAL
 
   -- Directories containing source files.
   hs-source-dirs:      src

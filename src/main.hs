@@ -63,7 +63,11 @@ main = do
   widgetShowAll window
 
   -- App state
-  stateref <- newIORef $ AppState { _piano = PianoSettings { _origin=150:+150, _keysize=40:+130, _indent=0.26, _mid=0.62 } }
+  stateref <- newIORef $ AppState { _piano = PianoSettings { _origin=150:+150,
+                                                             _keysize=40:+130,
+                                                             _indent=0.26,
+                                                             _mid=0.62,
+                                                             _active=Nothing } }
 
   -- Register event handlers
   window `on` deleteEvent       $ Events.ondelete stateref
