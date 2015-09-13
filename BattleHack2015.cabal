@@ -65,7 +65,9 @@ executable BattleHack2015
                        gtk3,
                        cairo,
                        lens,
-                       OpenAL
+                       OpenAL,
+                       StateVar,
+                       vector
 
   -- Directories containing source files.
   hs-source-dirs:      src
