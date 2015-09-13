@@ -28,6 +28,7 @@ module BattleHack.Types where
 -- We'll need these
 --------------------------------------------------------------------------------------------------------------------------------------------
 import Data.Complex
+import Sound.OpenAL
 
 
 
@@ -48,7 +49,7 @@ data KeyLayout = KeyLeft | KeyRight | KeyBoth | KeyAccidental deriving (Show)
 
 
 -- |
-data AppState = AppState { _piano :: PianoSettings } deriving (Show)
+data AppState = AppState { _piano :: PianoSettings, _source :: Source } deriving (Show)
 
 
 -- |

@@ -33,13 +33,17 @@ import Data.Complex
 import Data.List
 import Control.Lens
 import Control.Monad (liftM, forM)
+import Control.Concurrent
 
 import Graphics.UI.Gtk
 import qualified Graphics.Rendering.Cairo as Cairo
 
+import Sound.OpenAL
+
 import BattleHack.Types
 import BattleHack.Lenses
 import qualified BattleHack.Piano  as Piano
+import qualified BattleHack.Audio  as Audio
 import qualified BattleHack.Render as Render
 
 
@@ -85,7 +89,24 @@ onmousemotion stateref = do
 -- |
 onmousedown :: IORef AppState -> EventM EButton Bool
 onmousedown stateref = do
-  Cairo.liftIO $ putStrLn "Click!"
+  Cairo.liftIO $ do
+    -- Do yourself a favour and pretend you never saw this mess
+    appstate <- readIORef stateref
+    flip (maybe (return ())) (appstate ^. piano.active) $ \(ikey, _) -> do
+      loopingMode (_source appstate) $= [OneShot, Looping] !! 1 -- Easy toggling
+      forkIO $ Audio.note (_source appstate) (440*2**(fromIntegral ikey/12)) 1.0 -- TODO: Do not hard code duration
+      return ()
+    putStrLn "Click!"
+  return False
+
+
+-- |
+onmouseup :: IORef AppState -> EventM EButton Bool
+onmouseup stateref = do
+  -- TODO: Implement note press and release properly
+  source <- Cairo.liftIO $ liftM _source $ readIORef stateref
+  stop [source]
+  unqueueBuffers source 1
   return False
 
 
@@ -99,3 +120,11 @@ onwheelscrool stateref = do
   where
     panX ScrollUp   = (+ ((-5.0):+0.0))
     panX ScrollDown = (+ (( 5.0):+0.0))
+
+
+-- |
+onkeydown :: IORef AppState -> EventM EKey Bool
+onkeydown stateref = do
+  key <- eventKeyName -- TODO: Use key val?
+
+  return False

@@ -32,7 +32,7 @@ module Main where
 --------------------------------------------------------------------------------------------------------------------------------------------
 -- We'll need these
 --------------------------------------------------------------------------------------------------------------------------------------------
-import Control.Monad      (forM_)
+import Control.Monad      (forM_, when)
 import Control.Concurrent (threadDelay, forkIO)
 import Text.Printf
 import Data.IORef
@@ -68,48 +68,45 @@ main = do
   canvas <- drawingAreaNew
   containerAdd frame canvas
   set window [ containerChild := frame ]
-  windowSetDefaultSize window 720 480
+  windowSetDefaultSize window (round winx) (round winy)
 
   widgetAddEvents canvas [PointerMotionMask] -- MouseButton1Mask
   widgetShowAll window
 
+  -- Audio
+  Just device <- Audio.setup -- TODO: Return context as well (probably a good idea)
+  [source]    <- genObjectNames 1
+
   -- App state
-  stateref <- newIORef $ AppState { _piano = PianoSettings { _origin  = 150:+150,
-                                                             _keysize = 40:+130,
+  stateref <- newIORef $ AppState { _piano = PianoSettings { _origin  = origin',
+                                                             _keysize = keysize',
                                                              _indent  = 0.26,
                                                              _mid     = 0.62,
-                                                             _active  = Nothing } }
+                                                             _active  = Nothing },
+                                    _source = source }
 
   -- Register event handlers
-  window `on` deleteEvent       $ Events.ondelete      stateref
-  window `on` motionNotifyEvent $ Events.onmousemotion stateref
-  window `on` buttonPressEvent  $ Events.onmousedown   stateref
-  canvas `on` scrollEvent       $ Events.onwheelscrool stateref
-  canvas `on` draw              $ Events.ondraw        stateref
+  window `on` deleteEvent        $ Events.ondelete      stateref
+  window `on` motionNotifyEvent  $ Events.onmousemotion stateref
+  window `on` buttonPressEvent   $ Events.onmousedown   stateref
+  window `on` buttonReleaseEvent $ Events.onmouseup     stateref
+  window `on` keyPressEvent      $ Events.onkeydown     stateref
+  canvas `on` scrollEvent        $ Events.onwheelscrool stateref
+  canvas `on` draw               $ Events.ondraw        stateref
 
   timeoutAdd (Events.onanimate canvas stateref) (1000 `div` fps)
 
-  -- Audio
-  Just device <- Audio.setup
-
-  -- Fork off
-  forkIO $ do
-    audiobuffers <- mapM (\f -> Audio.makebuffer (take (Audio.numSamples 2) $ Audio.sine f)) [440*2**(n/12) | n <- [6, 0, 6, 0]]
-    [source]     <- genObjectNames 1
-
-    loopingMode source $= Looping
-
-    queueBuffers source audiobuffers
-    play [source]
-    threadDelay (5 * 2 * 10^6)
+  -- Fork off, no wait don't
+  -- audiobuffers <- mapM (\f -> Audio.makebuffer (take (Audio.numSamples 2) $ Audio.sine f)) [440*2**(n/12) | n <- [6, 0, 6, 0]]
 
   -- Enter main loop
   mainGUI
   where
-    origin@(ox:+oy) = 150:+150
-    size@(sx:+sy)   = 40:+130
-    indent          = sx*0.26
-    mid             = sy*0.62
+    origin'@(ox:+oy)  = 20:+20
+    keysize'@(sx:+sy) = (40:+130) * 4
+    (winx:+winy)      = (sx*7:+sy) + 2*origin'
+    -- indent           = sx*0.26
+    -- mid              = sy*0.62
 
     fps = 30
 

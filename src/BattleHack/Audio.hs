@@ -118,13 +118,11 @@ makebuffer samples = do
   withForeignPtr mem $ \ptr -> bufferData buffer $= BufferData (MemoryRegion (ptr :: Ptr CInt) (fromIntegral size)) Mono16 sampleRate           --
   return buffer
 
--- |
-note :: Device -> Double -> Double -> IO ()
-note device frequency duration = do
-  audiobuffers <- makebuffer (take (numSamples 2) $ sine frequency)
-  [source]     <- genObjectNames 1
 
-  loopingMode source $= Looping
+-- |
+note :: Source -> Double -> Double -> IO ()
+note source frequency duration = do
+  audiobuffers <- makebuffer (take (numSamples 2) $ sine frequency)
 
   queueBuffers source [audiobuffers]
   play [source]

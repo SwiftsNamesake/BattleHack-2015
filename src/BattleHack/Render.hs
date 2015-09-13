@@ -93,11 +93,12 @@ claviature :: PianoSettings -> Cairo.Render ()
 claviature settings = do
   forM_ [0..11] $ \ikey -> do
     key (size', indent', mid') (Piano.keyOrigin settings ikey) ikey
+    -- TODO: KISS
     if ikey `elem` Piano.naturals
       then Cairo.setSourceRGBA 0.4 (1/7 * fromIntegral (ikey `mod` 7)) 0.75 1.0
       else Cairo.setSourceRGBA 0.0 0.0                                 0.00 1.0
     if Just ikey == liftM fst (settings ^. active)
-      then Cairo.setSourceRGBA 0.1 0.4 0.2 1.0
+      then Cairo.setSourceRGBA 0.3 0.12 0.22 1.0
       else return ()
     Cairo.fill
 
