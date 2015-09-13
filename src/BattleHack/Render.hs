@@ -25,7 +25,7 @@ module BattleHack.Render where
 --------------------------------------------------------------------------------------------------------------------------------------------
 -- We'll need these
 --------------------------------------------------------------------------------------------------------------------------------------------
-import Control.Monad (forM_, liftM)
+import Control.Monad (forM_, liftM, when)
 import Control.Lens
 import Data.Complex
 -- import qualified Data.Set as S
@@ -97,9 +97,7 @@ claviature settings = do
     if ikey `elem` Piano.naturals
       then Cairo.setSourceRGBA 0.4 (1/7 * fromIntegral (ikey `mod` 7)) 0.75 1.0
       else Cairo.setSourceRGBA 0.0 0.0                                 0.00 1.0
-    if Just ikey == liftM fst (settings ^. active)
-      then Cairo.setSourceRGBA 0.3 0.12 0.22 1.0
-      else return ()
+    when ((settings ^. pressed) !! ikey || (Just ikey == liftM fst (settings ^. active))) $ Cairo.setSourceRGBA 0.3 0.12 0.22 1.0
     Cairo.fill
 
     -- key ((ox+sx*fromIntegral ikey):+oy) ikey

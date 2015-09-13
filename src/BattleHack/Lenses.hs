@@ -66,3 +66,8 @@ mid f s = (\new -> s { _mid=new }) `fmap` f (_mid s)
 -- |
 active :: Lens PianoSettings PianoSettings (Maybe (Int, Bool)) (Maybe (Int, Bool))
 active f s = (\new -> s { _active=new }) `fmap` f (_active s)
+
+
+-- |
+pressed :: Lens PianoSettings PianoSettings [Bool] [Bool]
+pressed f s = (\new -> s { _pressed=new }) `fmap` f (_pressed s)

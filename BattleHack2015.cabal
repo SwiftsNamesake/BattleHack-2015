@@ -67,7 +67,8 @@ executable BattleHack2015
                        lens,
                        OpenAL,
                        StateVar,
-                       vector
+                       vector,
+                       text
 
   -- Directories containing source files.
   hs-source-dirs:      src

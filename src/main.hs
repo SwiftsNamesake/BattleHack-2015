@@ -82,15 +82,20 @@ main = do
                                                              _keysize = keysize',
                                                              _indent  = 0.26,
                                                              _mid     = 0.62,
-                                                             _active  = Nothing },
+                                                             _active  = Nothing,
+                                                             _pressed = replicate 12 False },
                                     _source = source }
 
   -- Register event handlers
   window `on` deleteEvent        $ Events.ondelete      stateref
   window `on` motionNotifyEvent  $ Events.onmousemotion stateref
+
   window `on` buttonPressEvent   $ Events.onmousedown   stateref
   window `on` buttonReleaseEvent $ Events.onmouseup     stateref
-  window `on` keyPressEvent      $ Events.onkeydown     stateref
+
+  window `on` keyPressEvent      $ Events.onkeydown  stateref
+  window `on` keyReleaseEvent    $ Events.onkeyup    stateref
+
   canvas `on` scrollEvent        $ Events.onwheelscrool stateref
   canvas `on` draw               $ Events.ondraw        stateref
 

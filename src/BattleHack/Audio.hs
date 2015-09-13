@@ -120,6 +120,15 @@ makebuffer samples = do
 
 
 -- |
+stopall :: Source -> IO ()
+stopall source = do
+  count <- get $ buffersQueued source
+  stop [source]
+  unqueueBuffers source count
+  return ()
+
+
+-- |
 note :: Source -> Double -> Double -> IO ()
 note source frequency duration = do
   audiobuffers <- makebuffer (take (numSamples 2) $ sine frequency)

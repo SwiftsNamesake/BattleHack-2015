@@ -57,4 +57,5 @@ data PianoSettings = PianoSettings { _origin :: Vector,
                                     _keysize :: Vector,
                                     _indent  :: Double,
                                     _mid     :: Double,
-                                    _active  :: Maybe (Int, Bool) } deriving (Show)
+                                    _active  :: Maybe (Int, Bool),
+                                    _pressed :: [Bool] } deriving (Show)

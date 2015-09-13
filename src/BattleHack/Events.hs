@@ -14,7 +14,9 @@
 --------------------------------------------------------------------------------------------------------------------------------------------
 -- GHC pragmas
 --------------------------------------------------------------------------------------------------------------------------------------------
-{-# LANGUAGE TupleSections #-}
+{-# LANGUAGE TupleSections     #-}
+{-# LANGUAGE OverloadedStrings #-}
+
 
 
 --------------------------------------------------------------------------------------------------------------------------------------------
@@ -31,8 +33,9 @@ import Text.Printf
 import Data.IORef
 import Data.Complex
 import Data.List
+import qualified Data.Text as T
 import Control.Lens
-import Control.Monad (liftM, forM)
+import Control.Monad (liftM, forM, void, when)
 import Control.Concurrent
 
 import Graphics.UI.Gtk
@@ -92,10 +95,9 @@ onmousedown stateref = do
   Cairo.liftIO $ do
     -- Do yourself a favour and pretend you never saw this mess
     appstate <- readIORef stateref
-    flip (maybe (return ())) (appstate ^. piano.active) $ \(ikey, _) -> do
+    perhaps pass (appstate ^. piano.active) $ \(ikey, _) -> do
       loopingMode (_source appstate) $= [OneShot, Looping] !! 1 -- Easy toggling
-      forkIO $ Audio.note (_source appstate) (440*2**(fromIntegral ikey/12)) 1.0 -- TODO: Do not hard code duration
-      return ()
+      void $ forkIO $ Audio.note (_source appstate) (440*2**(fromIntegral ikey/12)) 1.0 -- TODO: Do not hard code duration
     putStrLn "Click!"
   return False
 
@@ -105,8 +107,7 @@ onmouseup :: IORef AppState -> EventM EButton Bool
 onmouseup stateref = do
   -- TODO: Implement note press and release properly
   source <- Cairo.liftIO $ liftM _source $ readIORef stateref
-  stop [source]
-  unqueueBuffers source 1
+  Cairo.liftIO $ Audio.stopall source
   return False
 
 
@@ -127,4 +128,53 @@ onkeydown :: IORef AppState -> EventM EKey Bool
 onkeydown stateref = do
   key <- eventKeyName -- TODO: Use key val?
 
+  when (key == "Escape") (Cairo.liftIO mainQuit)
+
+  Cairo.liftIO $ do
+    -- Do yourself a favour and pretend you never saw this mess
+    let mikey = noteIndexFromKey key
+    modifyIORef stateref (setactive key)
+    perhaps pass mikey $ \ikey -> modifyIORef stateref (piano.pressed.ix ikey .~ True)
+
+    perhaps pass (noteIndexFromKey key) $ \iactive -> do
+      appstate <- readIORef stateref
+      loopingMode (_source appstate) $= [OneShot, Looping] !! 1 -- Easy toggling
+      void $ forkIO $ Audio.note (_source appstate) (440*2**(fromIntegral iactive/12)) 1.0 -- TODO: Do not hard code duration
   return False
+  where
+    setactive key = piano.active .~ liftM (, True) (noteIndexFromKey key)
+
+
+-- |
+onkeyup :: IORef AppState -> EventM EKey Bool
+onkeyup stateref = do
+  key <- eventKeyName -- TODO: Use key val?
+  -- TODO: Implement note press and release properly
+  source <- Cairo.liftIO $ liftM _source $ readIORef stateref
+  Cairo.liftIO $ do
+    let mikey = noteIndexFromKey key
+    Audio.stopall source
+    modifyIORef stateref (piano.active .~ Nothing)
+    perhaps pass mikey $ \ikey -> modifyIORef stateref (piano.pressed.ix ikey .~ False)
+
+  return False
+
+
+-- Utilities -------------------------------------------------------------------------------------------------------------------------------
+-- |
+noteIndexFromKey :: T.Text -> Maybe Int
+noteIndexFromKey k' = liftM (range !!) (elemIndex k keys) -- TODO: Factor out
+  where
+    k = head $ T.unpack k'
+    keys = "qwertyuiopas"
+    range = [0..11]
+
+
+-- |
+pass :: Monad m => m ()
+pass = return ()
+
+
+-- |
+perhaps :: b -> Maybe a -> (a -> b) -> b
+perhaps d mb f = maybe d f mb
