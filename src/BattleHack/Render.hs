@@ -25,7 +25,7 @@ module BattleHack.Render where
 --------------------------------------------------------------------------------------------------------------------------------------------
 -- We'll need these
 --------------------------------------------------------------------------------------------------------------------------------------------
-import Control.Monad (forM_)
+import Control.Monad (forM_, liftM)
 import Control.Lens
 import Data.Complex
 -- import qualified Data.Set as S
@@ -34,7 +34,7 @@ import qualified Graphics.Rendering.Cairo as Cairo
 
 import BattleHack.Types
 import BattleHack.Lenses
-import BattleHack.Piano
+import qualified BattleHack.Piano as Piano
 
 
 --------------------------------------------------------------------------------------------------------------------------------------------
@@ -45,10 +45,10 @@ import BattleHack.Piano
 
 -- |
 layout :: RealFloat r => Complex r -> r -> r -> KeyLayout -> [Complex r]
-layout (sx:+sy) indent mid KeyRight      = [0:+0,           (sx-indent):+0,   (sx-indent):+mid, sx:+mid, sx:+sy,  0:+sy]                  -- Right indent
-layout (sx:+sy) indent mid KeyBoth       = [indent:+0,      (sx-indent):+0,   (sx-indent):+mid, sx:+mid, sx:+sy,  0:+sy,      0:+mid, indent:+mid ]                  -- Double indent
-layout (sx:+sy) indent mid KeyLeft       = [indent:+0,      sx:+0,            sx:+sy,           0:+sy,   0:+mid,  indent:+mid] -- Left indent
-layout (sx:+sy) indent mid KeyAccidental = [(sx-indent):+0, (sx-indent):+mid, (sx+indent):+mid, (sx+indent):+0]                           -- Accidental
+layout (sx:+sy) indent mid KeyRight      = [0:+0,           (sx-indent):+0,   (sx-indent):+mid, sx:+mid, sx:+sy,  0:+sy]                      -- Right indent
+layout (sx:+sy) indent mid KeyBoth       = [indent:+0,      (sx-indent):+0,   (sx-indent):+mid, sx:+mid, sx:+sy,  0:+sy,0:+mid, indent:+mid ] -- Double indent
+layout (sx:+sy) indent mid KeyLeft       = [indent:+0,      sx:+0,            sx:+sy,           0:+sy,   0:+mid,  indent:+mid]                -- Left indent
+layout (sx:+sy) indent mid KeyAccidental = [(sx-indent):+0, (sx-indent):+mid, (sx+indent):+mid, (sx+indent):+0]                               -- Accidental
   where
     nw = 0:+0   -- North west
     ne = sx:+0  -- North east
@@ -85,17 +85,20 @@ key :: (Complex Double, Double, Double) -> Complex Double -> Int -> Cairo.Render
 key (size, indent, mid) origin i = do
   polygon . map (+origin) $ keylayout
   where
-    keylayout     = layout size indent mid (chordlayout !! (i `mod` 12)) :: [Complex Double]
+    keylayout     = layout size indent mid (Piano.keyLayout i) :: [Complex Double]
 
 
 -- |
 claviature :: PianoSettings -> Cairo.Render ()
 claviature settings = do
-  forM_ (zip keysteps [0..11]) $ \(offx, ikey) -> do
-    key (size', indent', mid') ((ox+sx*offx):+oy) ikey
-    if ikey `elem` naturals
+  forM_ [0..11] $ \ikey -> do
+    key (size', indent', mid') (Piano.keyOrigin settings ikey) ikey
+    if ikey `elem` Piano.naturals
       then Cairo.setSourceRGBA 0.4 (1/7 * fromIntegral (ikey `mod` 7)) 0.75 1.0
       else Cairo.setSourceRGBA 0.0 0.0                                 0.00 1.0
+    if Just ikey == liftM fst (settings ^. active)
+      then Cairo.setSourceRGBA 0.1 0.4 0.2 1.0
+      else return ()
     Cairo.fill
 
     -- key ((ox+sx*fromIntegral ikey):+oy) ikey

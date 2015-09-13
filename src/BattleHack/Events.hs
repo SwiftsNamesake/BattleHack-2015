@@ -14,7 +14,7 @@
 --------------------------------------------------------------------------------------------------------------------------------------------
 -- GHC pragmas
 --------------------------------------------------------------------------------------------------------------------------------------------
-
+{-# LANGUAGE TupleSections #-}
 
 
 --------------------------------------------------------------------------------------------------------------------------------------------
@@ -30,13 +30,16 @@ module BattleHack.Events where
 import Text.Printf
 import Data.IORef
 import Data.Complex
+import Data.List
 import Control.Lens
+import Control.Monad (liftM, forM)
 
 import Graphics.UI.Gtk
 import qualified Graphics.Rendering.Cairo as Cairo
 
 import BattleHack.Types
 import BattleHack.Lenses
+import qualified BattleHack.Piano  as Piano
 import qualified BattleHack.Render as Render
 
 
@@ -68,9 +71,15 @@ ondelete stateref = do
 -- |
 onmousemotion :: IORef AppState -> EventM EMotion Bool
 onmousemotion stateref = do
-  (x, y) <- eventCoordinates
-  Cairo.liftIO . putStrLn $ printf "Mouse at x=%.02f, y=%.02f" x y
+  mouse <- liftM tovector eventCoordinates
+  Cairo.liftIO $ modifyIORef stateref (setactive mouse)
   return False
+  where
+    tovector :: (Double, Double) -> Complex Double
+    tovector =  uncurry (:+)
+
+    setactive mouse appstate    = appstate & piano.active .~ ( liftM (, False) $ find (hoveredKey (appstate ^. piano) mouse) [0..11])
+    hoveredKey piano mouse ikey = Piano.inside piano (Piano.keyLayout ikey) (mouse-Piano.keyOrigin piano ikey)
 
 
 -- |

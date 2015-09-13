@@ -3,9 +3,15 @@
 -- Description : Entry point module
 -- Copyright   : (c) Jonatan H Sundqvist, 2015
 -- License     : MIT
--- Maintainer  : sample@email.com
+-- Maintainer  : jonatanhsundqvist@gmail.com
 -- Stability   : experimental
 -- Portability : POSIX
+
+-- TODO | - JSON key bindings and config
+--        - Sharing scores and recordings
+--        - Buying premade assets, scores, sound fonts, etc. (user content)
+--        - Audio!
+--        - Serialisation ()
 
 
 
@@ -76,7 +82,6 @@ main = do
   canvas `on` scrollEvent       $ Events.onwheelscrool stateref
   canvas `on` draw              $ Events.ondraw stateref
 
-  -- canvas `on` onaimate
   timeoutAdd (Events.onanimate canvas stateref) (1000 `div` fps)
 
   mainGUI
@@ -94,5 +99,5 @@ goodbyeWorld :: IO ()
 goodbyeWorld = do
   putStrLn "Hello world!"
   putStrLn "Counting down to launch..."
-  forM_ [9,8..0] ((>> threadDelay (10^6)) . print)
+  forM_ [10,9..0] ((>> threadDelay (10^6)) . print)
   putStrLn "Launching. What have I done!?"

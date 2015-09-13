@@ -63,11 +63,25 @@ keysteps = scanl1 (+) [0, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1]
 -- Functions
 --------------------------------------------------------------------------------------------------------------------------------------------
 -- |
+keyOrigin :: PianoSettings -> Int -> Vector
+keyOrigin piano ikey = (ox+sx*shiftX):+oy
+  where
+    (ox:+oy) = piano ^. origin
+    (sx:+_)  = piano ^. keysize
+    shiftX   = keysteps !! (ikey `mod` 12)
+
+
+-- |
+keyLayout :: Int -> KeyLayout
+keyLayout i = chordlayout !! (i `mod` 12)
+
+
+-- |
 inside :: PianoSettings -> KeyLayout -> Vector -> Bool
 inside piano KeyLeft       p = insideBounds piano p && not (insideLeft piano p)
 inside piano KeyRight      p = insideBounds piano p && not (insideRight piano p)
 inside piano KeyBoth       p = insideBounds piano p && not (insideLeft piano p || insideRight piano p)
-inside piano KeyAccidental p = error ""
+inside piano KeyAccidental p = insideRight  piano p || insideLeft piano (p - (realPart (piano ^. keysize):+0))
 
 
 -- | Is the point within the rectangular bounding box of the key?
