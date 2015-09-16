@@ -12,7 +12,7 @@
 --        - Buying premade assets, scores, sound fonts, etc. (user content)
 --        - Audio!
 --        - 3D audio (move listener around)
---        - Serialisation ()
+--        - Serialisation
 
 
 
@@ -76,6 +76,7 @@ main = do
   -- Audio
   Just device <- Audio.setup -- TODO: Return context as well (probably a good idea)
   [source]    <- genObjectNames 1
+  -- audiobuffers <- mapM (\f -> Audio.makebuffer (take (Audio.numSamples 2) $ Audio.sine f)) [440*2**(n/12) | n <- [6, 0, 6, 0]]
 
   -- App state
   stateref <- newIORef $ AppState { _piano = PianoSettings { _origin  = origin',
@@ -90,30 +91,24 @@ main = do
   window `on` deleteEvent        $ Events.ondelete      stateref
   window `on` motionNotifyEvent  $ Events.onmousemotion stateref
 
-  window `on` buttonPressEvent   $ Events.onmousedown   stateref
-  window `on` buttonReleaseEvent $ Events.onmouseup     stateref
+  window `on` buttonPressEvent   $ Events.onmousedown stateref
+  window `on` buttonReleaseEvent $ Events.onmouseup   stateref
 
-  window `on` keyPressEvent      $ Events.onkeydown  stateref
-  window `on` keyReleaseEvent    $ Events.onkeyup    stateref
+  window `on` keyPressEvent      $ Events.onkeydown stateref
+  window `on` keyReleaseEvent    $ Events.onkeyup   stateref
 
   canvas `on` scrollEvent        $ Events.onwheelscrool stateref
   canvas `on` draw               $ Events.ondraw        stateref
 
   timeoutAdd (Events.onanimate canvas stateref) (1000 `div` fps)
 
-  -- Fork off, no wait don't
-  -- audiobuffers <- mapM (\f -> Audio.makebuffer (take (Audio.numSamples 2) $ Audio.sine f)) [440*2**(n/12) | n <- [6, 0, 6, 0]]
-
   -- Enter main loop
   mainGUI
   where
-    origin'@(ox:+oy)  = 20:+20
-    keysize'@(sx:+sy) = (40:+130) * 4
-    (winx:+winy)      = (sx*7:+sy) + 2*origin'
-    -- indent           = sx*0.26
-    -- mid              = sy*0.62
-
     fps = 30
+    origin'@(ox:+oy)  = 20:+20
+    keysize'@(sx:+sy) = (4:+13) * 40
+    (winx:+winy)      = (sx*7:+sy) + 2*origin'
 
 
 -- | Just a little hello world snippet to make sure everything is set up properly.

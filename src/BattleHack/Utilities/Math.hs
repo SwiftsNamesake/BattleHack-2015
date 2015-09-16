@@ -1,63 +1,47 @@
 -- |
--- Module      : BattleHack.Types
+-- Module      : BattleHack.Utilities.Math
 -- Description :
 -- Copyright   : (c) Jonatan H Sundqvist, 2015
 -- License     : MIT
 -- Maintainer  : Jonatan H Sundqvist
--- Stability   : experimental
--- Portability : POSIX
+-- Stability   : experimental|stable
+-- Portability : POSIX (not sure)
+--
 
--- Created September 12 2015
+-- Created September 15 2015
+
+-- TODO | -
+--        -
+
+-- SPEC | -
+--        -
 
 
 
 --------------------------------------------------------------------------------------------------------------------------------------------
--- GHC pragmas
+-- GHC Pragmas
 --------------------------------------------------------------------------------------------------------------------------------------------
+
 
 
 
 --------------------------------------------------------------------------------------------------------------------------------------------
 -- API
 --------------------------------------------------------------------------------------------------------------------------------------------
-module BattleHack.Types where
+module BattleHack.Utilities.Math where
 
 
 
 --------------------------------------------------------------------------------------------------------------------------------------------
 -- We'll need these
 --------------------------------------------------------------------------------------------------------------------------------------------
-import Data.Complex
-import Sound.OpenAL
+
 
 
 
 --------------------------------------------------------------------------------------------------------------------------------------------
--- Data
+-- Constants
 --------------------------------------------------------------------------------------------------------------------------------------------
--- |
-type Number = Double
-type Vector = Complex Number
-type Sample = Double
-
-
--- |
-data KeyLayout = KeyLeft | KeyRight | KeyBoth | KeyAccidental deriving (Show)
-
-
--- |
--- data Note = C Pitch | D Pitch | E Pitch | F Pitch | G Pitch | A Pitch | B Pitch deriving (Show)
--- data Pitch = Sharp | Flat | Natural                                             deriving (Show)
-
-
--- |
-data AppState = AppState { _piano :: PianoSettings, _source :: Source } deriving (Show)
-
-
--- |
-data PianoSettings = PianoSettings { _origin :: Vector,
-                                     _keysize :: Vector,
-                                     _indent  :: Number,
-                                     _mid     :: Number,
-                                     _active  :: Maybe Int,
-                                     _pressed :: [Bool] } deriving (Show)
+-- | Because 'π' looks so much better than 'pi'. Objectively speaking.
+π :: Floating r => r
+π = pi

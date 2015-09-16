@@ -1,0 +1,7 @@
+extra-deps:
+  - OpenAL-1.7.0.1
+  - category-extras-0.53.5
+resolver: lts-2.12 # ghc-7.8.4
+flags: {}
+packages:
+- '.'

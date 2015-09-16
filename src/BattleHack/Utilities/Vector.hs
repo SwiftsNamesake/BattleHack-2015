@@ -1,26 +1,34 @@
 -- |
--- Module      : BattleHack.Types
+-- Module      : BattleHack.Utilities.Vector
 -- Description :
 -- Copyright   : (c) Jonatan H Sundqvist, 2015
 -- License     : MIT
 -- Maintainer  : Jonatan H Sundqvist
--- Stability   : experimental
--- Portability : POSIX
+-- Stability   : experimental|stable
+-- Portability : POSIX (not sure)
+--
 
--- Created September 12 2015
+-- Created September 14 2015
+
+-- TODO | - Is it silly to use Complex Double for everything because of Cairo?
+--        -
+
+-- SPEC | -
+--        -
 
 
 
 --------------------------------------------------------------------------------------------------------------------------------------------
--- GHC pragmas
+-- GHC Pragmas
 --------------------------------------------------------------------------------------------------------------------------------------------
+
 
 
 
 --------------------------------------------------------------------------------------------------------------------------------------------
 -- API
 --------------------------------------------------------------------------------------------------------------------------------------------
-module BattleHack.Types where
+module BattleHack.Utilities.Vector where
 
 
 
@@ -28,36 +36,25 @@ module BattleHack.Types where
 -- We'll need these
 --------------------------------------------------------------------------------------------------------------------------------------------
 import Data.Complex
-import Sound.OpenAL
+
+import BattleHack.Types
+import BattleHack.Lenses
 
 
 
 --------------------------------------------------------------------------------------------------------------------------------------------
--- Data
+-- Functions
 --------------------------------------------------------------------------------------------------------------------------------------------
 -- |
-type Number = Double
-type Vector = Complex Number
-type Sample = Double
+dotwise :: (a -> a -> a) -> Complex a -> Complex a -> Complex a
+dotwise f (x:+y) (x':+y') = f x x':+f y y'
 
 
 -- |
-data KeyLayout = KeyLeft | KeyRight | KeyBoth | KeyAccidental deriving (Show)
+dotmap :: (a -> a) -> Complex a -> Complex a
+dotmap f (x:+y) = f x:+f y
 
 
 -- |
--- data Note = C Pitch | D Pitch | E Pitch | F Pitch | G Pitch | A Pitch | B Pitch deriving (Show)
--- data Pitch = Sharp | Flat | Natural                                             deriving (Show)
-
-
--- |
-data AppState = AppState { _piano :: PianoSettings, _source :: Source } deriving (Show)
-
-
--- |
-data PianoSettings = PianoSettings { _origin :: Vector,
-                                     _keysize :: Vector,
-                                     _indent  :: Number,
-                                     _mid     :: Number,
-                                     _active  :: Maybe Int,
-                                     _pressed :: [Bool] } deriving (Show)
+toscalar :: (a -> a -> a) -> Complex a -> a
+toscalar f (x:+y) = f x y

@@ -16,13 +16,13 @@ version:             0.1.0.0
 synopsis:            When music comes alive...
 
 -- A longer description of the package.
--- description:
+description:         I tried to cram a Steinway Grand into a laptop. It didn't end well.
 
 -- The license under which the package is released.
 license:             MIT
 
 -- The file containing the license text.
-license-file:        LICENSE
+license-file:        LICENSE.md
 
 -- The package author(s).
 author:              Jonatan H Sundqvist
@@ -48,20 +48,23 @@ cabal-version:       >=1.10
 
 executable BattleHack2015
   -- .hs or .lhs file containing the Main module.
-  main-is:             main.hs
+  main-is:             Main.hs
 
   -- Modules included in this executable, other than Main.
   other-modules:       BattleHack.Render,
                        BattleHack.Events,
                        BattleHack.Types
                        BattleHack.Lenses,
-                       BattleHack.Piano
+                       BattleHack.Piano,
+                       BattleHack.Audio,
+                       BattleHack.Utilities.Vector,
+                       BattleHack.Utilities.Math
 
   -- LANGUAGE extensions used by modules in this package.
   -- other-extensions:
 
   -- Other library packages from which modules are imported.
-  build-depends:       base >=4.8 && <4.9,
+  build-depends:       base,
                        gtk3,
                        cairo,
                        lens,

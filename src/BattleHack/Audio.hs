@@ -28,41 +28,47 @@ module BattleHack.Audio where
 --------------------------------------------------------------------------------------------------------------------------------------------
 -- We'll need these
 --------------------------------------------------------------------------------------------------------------------------------------------
-import Data.Maybe
-import Foreign                   -- Import the foreigners!
-import Foreign.C.Types           --
-import Control.Monad (liftM)
-import Control.Concurrent
+import Data.Maybe            --
+import Foreign               -- Import the foreigners!
+import Foreign.C.Types       --
+import Control.Monad (liftM) --
+import Control.Concurrent    --
+import Control.Applicative
 
-import qualified Data.Vector.Storable as V          --
-import qualified Data.Vector.Storable.Mutable as VM --
+import qualified Data.Vector.Storable         as V
+import qualified Data.Vector.Storable.Mutable as VM
 
-import Sound.OpenAL.AL.BasicTypes ()        --
+import Sound.OpenAL.AL.BasicTypes ()
 import Sound.OpenAL
 
+import BattleHack.Types
+import BattleHack.Utilities.Math
 
 
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+-- Data
+--------------------------------------------------------------------------------------------------------------------------------------------
+-- |
 sampleRate :: Num n => n
 sampleRate = 44100
 
-type Sample = Double
-
--- bufferData audiobuffer $= (BufferData _ Mono16 44100)
 
 
 --------------------------------------------------------------------------------------------------------------------------------------------
 -- Functions
 --------------------------------------------------------------------------------------------------------------------------------------------
 -- |
-bufferSize :: Storable a => Int -> a -> Double -> Int
-bufferSize nchannels sampleType secs = fromIntegral (numSamples secs) * sizeOf sampleType * nchannels
+-- bufferSize :: Storable a => Int -> a -> Double -> Int
+-- bufferSize nchannels sampleType secs = fromIntegral (numSamples secs) * sizeOf sampleType * nchannels
 
 
 -- |
 numSamples :: Integral n => Double -> n --NumSamples
-numSamples secs = round (fromIntegral sampleRate * secs)
+numSamples      = round . (fromIntegral sampleRate *)
 
----------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------
+
 -- |
 device :: IO (Maybe Device)
 device = do
@@ -82,42 +88,37 @@ pcm bits sample = truncate $ sample * (fromIntegral $ ((2 :: Int) ^ (bits - 1)) 
 --------------------------------------------------------------------------------------------------------------------------------------------
 
 -- |
--- # From http://dev.stephendiehl.com/hask/#ffi
-vecPtr :: VM.MVector s CInt -> ForeignPtr CInt
-vecPtr = fst . VM.unsafeToForeignPtr0
-
---------------------------------------------------------------------------------------------------------------------------------------------
-
--- |
 sine :: Double -> [Sample]
-sine freq = cycle $ take n $ map sin [0, d..]
+sine freq = cycle . take n $ map sin [0, d..]
   where
-    d  = 2 * pi * freq / sr
-    n  = truncate (sr /freq)
-    sr = fromIntegral sampleRate
+    d  = 2 * pi * freq / sr      --
+    n  = truncate (sr /freq)     --
+    sr = fromIntegral sampleRate --
 
 --------------------------------------------------------------------------------------------------------------------------------------------
 
 -- |
-setup :: IO (Maybe Device)
+setup :: IO (Maybe (Context, Device))
 setup = do
   mdevice  <- device
-  mcontext <- maybe (return Nothing) (flip createContext []) mdevice
+  mcontext <-  maybe (return Nothing) (flip createContext []) mdevice -- <$> mdevice
 
   currentContext $= mcontext
-  return mdevice
+  return $ pure (,) <*> mcontext <*> mdevice
 
 
 -- |
+-- TODO: Simplify
 makebuffer :: [Double] -> IO Buffer
 makebuffer samples = do
   [buffer] <- genObjectNames 1
-  mutableV <- V.thaw . V.fromList . map (pcm 16) $ samples -- . take (length samples) $ --sine 220  --
-  ptr      <- V.freeze mutableV
-  let (mem, size) = V.unsafeToForeignPtr0 ptr --
-  withForeignPtr mem $ \ptr -> bufferData buffer $= BufferData (MemoryRegion (ptr :: Ptr CInt) (fromIntegral size)) Mono16 sampleRate           --
+  mutvec <- V.thaw . V.fromList . map (pcm 16) $ samples
+  imm <- V.freeze mutvec
+  let (memory, size) = V.unsafeToForeignPtr0 imm in fillbuffer buffer memory (fromIntegral size)
   return buffer
-
+  where
+    format = Mono16
+    fillbuffer buffer mem size = withForeignPtr mem $ \ptr -> bufferData buffer $= BufferData (MemoryRegion (ptr :: Ptr CInt) size) format sampleRate
 
 -- |
 stopall :: Source -> IO ()

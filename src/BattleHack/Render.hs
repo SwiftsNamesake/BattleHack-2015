@@ -37,30 +37,32 @@ import BattleHack.Lenses
 import qualified BattleHack.Piano as Piano
 
 
+
 --------------------------------------------------------------------------------------------------------------------------------------------
 -- Data
 --------------------------------------------------------------------------------------------------------------------------------------------
-
-
-
 -- |
+-- TODO: Move to Piano
 layout :: RealFloat r => Complex r -> r -> r -> KeyLayout -> [Complex r]
-layout (sx:+sy) indent mid KeyRight      = [0:+0,           (sx-indent):+0,   (sx-indent):+mid, sx:+mid, sx:+sy,  0:+sy]                      -- Right indent
-layout (sx:+sy) indent mid KeyBoth       = [indent:+0,      (sx-indent):+0,   (sx-indent):+mid, sx:+mid, sx:+sy,  0:+sy,0:+mid, indent:+mid ] -- Double indent
-layout (sx:+sy) indent mid KeyLeft       = [indent:+0,      sx:+0,            sx:+sy,           0:+sy,   0:+mid,  indent:+mid]                -- Left indent
-layout (sx:+sy) indent mid KeyAccidental = [(sx-indent):+0, (sx-indent):+mid, (sx+indent):+mid, (sx+indent):+0]                               -- Accidental
+layout (sx:+sy) indent mid which = case which of
+  KeyRight ->      [nw,  nei,  rmi,         rm, se, sw]
+  KeyBoth  ->      [nwi, nei,  rmi,         rm, se, sw, lm, lmi]
+  KeyLeft  ->      [nwi, ne,   se,          sw, lm, lmi]
+  KeyAccidental -> [nei, rmi,  (sx:+0)+lmi, (sx:+0)+nwi]
   where
     nw = 0:+0   -- North west
     ne = sx:+0  -- North east
     se = sx:+sy -- South east
     sw = 0:+sy  -- South west
 
-    le = indent:+mid      -- Left indent
-    re = (sx-indent):+mid -- Right indent
+    nwi = indent:+0       -- North west indented
+    nei = (sx-indent):+0  -- North east indented
+
+    lmi = indent:+mid      -- Left  middle indent
+    rmi = (sx-indent):+mid -- Right middle indent
 
     lm = 0:+mid  -- Left middle
     rm = sx:+mid -- Right middle
-
 
 
 
@@ -93,11 +95,7 @@ claviature :: PianoSettings -> Cairo.Render ()
 claviature settings = do
   forM_ [0..11] $ \ikey -> do
     key (size', indent', mid') (Piano.keyOrigin settings ikey) ikey
-    -- TODO: KISS
-    if ikey `elem` Piano.naturals
-      then Cairo.setSourceRGBA 0.4 (1/7 * fromIntegral (ikey `mod` 7)) 0.75 1.0
-      else Cairo.setSourceRGBA 0.0 0.0                                 0.00 1.0
-    when ((settings ^. pressed) !! ikey || (Just ikey == liftM fst (settings ^. active))) $ Cairo.setSourceRGBA 0.3 0.12 0.22 1.0
+    let (r, g, b, a) = colour ikey in Cairo.setSourceRGBA r g b a
     Cairo.fill
 
     -- key ((ox+sx*fromIntegral ikey):+oy) ikey
@@ -109,6 +107,11 @@ claviature settings = do
     size'@(sx:+sy)  = settings ^. keysize
     indent'         = sx*settings ^. indent
     mid'            = sy*settings ^. mid
+    colour ikey
+      | (settings ^. pressed) !! ikey               = (0.3, 0.12, 0.22, 1.0)
+      | Just ikey == liftM fst (settings ^. active) = (0.3, 0.12, 0.22, 1.0)
+      | ikey `elem` Piano.naturals                  = (0.4, 1/7 * fromIntegral (ikey `mod` 7), 0.75, 1.00)
+      | otherwise                                   = (0.0, 0.0,                               0.00, 1.00)
 
 
 -- Menu ------------------------------------------------------------------------------------------------------------------------------------

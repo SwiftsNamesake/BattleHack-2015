@@ -43,6 +43,9 @@ import qualified Graphics.Rendering.Cairo as Cairo
 
 import Sound.OpenAL
 
+-- import qualified Data.Aeson as JSON
+-- import qualified Data.Map   as M
+
 import BattleHack.Types
 import BattleHack.Lenses
 import qualified BattleHack.Piano  as Piano
@@ -65,7 +68,7 @@ onanimate canvas stateref = do
 ondraw :: IORef AppState -> Cairo.Render ()
 ondraw stateref = do
   state <- Cairo.liftIO $ readIORef stateref
-  Render.claviature (state ^. piano)
+  Render.claviature $ state-->piano
 
 
 -- |
@@ -85,6 +88,7 @@ onmousemotion stateref = do
     tovector :: (Double, Double) -> Complex Double
     tovector =  uncurry (:+)
 
+    -- TODO: Simplify
     setactive mouse appstate    = appstate & piano.active .~ ( liftM (, False) $ find (hoveredKey (appstate ^. piano) mouse) [0..11])
     hoveredKey piano mouse ikey = Piano.inside piano (Piano.keyLayout ikey) (mouse-Piano.keyOrigin piano ikey)
 
