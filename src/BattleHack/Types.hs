@@ -9,6 +9,12 @@
 
 -- Created September 12 2015
 
+-- TODO | -
+--        -
+
+-- SPEC | -
+--        -
+
 
 
 --------------------------------------------------------------------------------------------------------------------------------------------
@@ -28,17 +34,23 @@ module BattleHack.Types where
 -- We'll need these
 --------------------------------------------------------------------------------------------------------------------------------------------
 import Data.Complex
+import qualified Data.Map as M
 import Sound.OpenAL
 
 
 
 --------------------------------------------------------------------------------------------------------------------------------------------
--- Data
+-- Types
 --------------------------------------------------------------------------------------------------------------------------------------------
 -- |
 type Number = Double
 type Vector = Complex Number
 type Sample = Double
+
+
+-- |
+type Command = IO ()
+type KeyMap  = M.Map String Command
 
 
 -- |
@@ -51,13 +63,13 @@ data KeyLayout = KeyLeft | KeyRight | KeyBoth | KeyAccidental deriving (Show)
 
 
 -- |
-data AppState = AppState { _piano :: PianoSettings, _source :: Source } deriving (Show)
+data AppState = AppState { _piano :: PianoSettings, _source :: Source, _bindings :: KeyMap } -- deriving (Show)
 
 
 -- |
-data PianoSettings = PianoSettings { _origin :: Vector,
+data PianoSettings = PianoSettings { _origin  :: Vector,
                                      _keysize :: Vector,
                                      _indent  :: Number,
                                      _mid     :: Number,
                                      _active  :: Maybe Int,
-                                     _pressed :: [Bool] } deriving (Show)
+                                     _keys    :: [Bool] } deriving (Show)

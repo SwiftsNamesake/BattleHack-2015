@@ -33,21 +33,29 @@ import Text.Printf
 import Data.IORef
 import Data.Complex
 import Data.List
+import Data.Maybe
+import Data.Functor
+
 import qualified Data.Text as T
+import qualified Data.Map  as M
+
 import Control.Lens
 import Control.Monad (liftM, forM, void, when)
+import Control.Applicative
 import Control.Concurrent
 
 import Graphics.UI.Gtk
 import qualified Graphics.Rendering.Cairo as Cairo
 
 import Sound.OpenAL
+-- import qualified Sound.ALUT   as Alut
 
 -- import qualified Data.Aeson as JSON
 -- import qualified Data.Map   as M
 
 import BattleHack.Types
 import BattleHack.Lenses
+import BattleHack.Utilities.General
 import qualified BattleHack.Piano  as Piano
 import qualified BattleHack.Audio  as Audio
 import qualified BattleHack.Render as Render
@@ -89,8 +97,8 @@ onmousemotion stateref = do
     tovector =  uncurry (:+)
 
     -- TODO: Simplify
-    setactive mouse appstate    = appstate & piano.active .~ ( liftM (, False) $ find (hoveredKey (appstate ^. piano) mouse) [0..11])
-    hoveredKey piano mouse ikey = Piano.inside piano (Piano.keyLayout ikey) (mouse-Piano.keyOrigin piano ikey)
+    setactive mouse appstate    = appstate & piano.active .~ find (hoveredKey (appstate ^. piano) mouse) [0..11]
+    hoveredKey piano mouse ikey = Piano.inside piano (Piano.keylayout ikey) (mouse-Piano.keyorigin piano ikey)
 
 
 -- |
@@ -99,10 +107,9 @@ onmousedown stateref = do
   Cairo.liftIO $ do
     -- Do yourself a favour and pretend you never saw this mess
     appstate <- readIORef stateref
-    perhaps pass (appstate ^. piano.active) $ \(ikey, _) -> do
+    perhaps pass (appstate ^. piano.active) $ \ikey -> do
       loopingMode (_source appstate) $= [OneShot, Looping] !! 1 -- Easy toggling
-      void $ forkIO $ Audio.note (_source appstate) (440*2**(fromIntegral ikey/12)) 1.0 -- TODO: Do not hard code duration
-    putStrLn "Click!"
+      void . forkIO $ Audio.note (_source appstate) (Piano.pitchFromKeyIndex ikey) 1.0 -- TODO: Do not hard code duration
   return False
 
 
@@ -130,23 +137,25 @@ onwheelscrool stateref = do
 -- |
 onkeydown :: IORef AppState -> EventM EKey Bool
 onkeydown stateref = do
-  key <- eventKeyName -- TODO: Use key val?
+  key      <- eventKeyName -- TODO: Use key val?
+  bindings <- Cairo.liftIO . liftM (-->bindings) . readIORef $ stateref
 
-  when (key == "Escape") (Cairo.liftIO mainQuit)
+  maybe pass Cairo.liftIO (M.lookup (T.unpack key) bindings) --
 
   Cairo.liftIO $ do
     -- Do yourself a favour and pretend you never saw this mess
     let mikey = noteIndexFromKey key
     modifyIORef stateref (setactive key)
-    perhaps pass mikey $ \ikey -> modifyIORef stateref (piano.pressed.ix ikey .~ True)
+    perhaps pass mikey $ \ikey -> modifyIORef stateref (piano.keys.ix ikey .~ True)
 
     perhaps pass (noteIndexFromKey key) $ \iactive -> do
       appstate <- readIORef stateref
       loopingMode (_source appstate) $= [OneShot, Looping] !! 1 -- Easy toggling
-      void $ forkIO $ Audio.note (_source appstate) (440*2**(fromIntegral iactive/12)) 1.0 -- TODO: Do not hard code duration
+      void . forkIO $ Audio.note (_source appstate) (Piano.pitchFromKeyIndex iactive) 1.0 -- TODO: Do not hard code duration
+
   return False
   where
-    setactive key = piano.active .~ liftM (, True) (noteIndexFromKey key)
+    setactive key = piano.active .~ noteIndexFromKey key
 
 
 -- |
@@ -159,7 +168,7 @@ onkeyup stateref = do
     let mikey = noteIndexFromKey key
     Audio.stopall source
     modifyIORef stateref (piano.active .~ Nothing)
-    perhaps pass mikey $ \ikey -> modifyIORef stateref (piano.pressed.ix ikey .~ False)
+    perhaps pass mikey $ \ikey -> modifyIORef stateref (piano.keys.ix ikey .~ False)
 
   return False
 
@@ -167,18 +176,8 @@ onkeyup stateref = do
 -- Utilities -------------------------------------------------------------------------------------------------------------------------------
 -- |
 noteIndexFromKey :: T.Text -> Maybe Int
-noteIndexFromKey k' = liftM (range !!) (elemIndex k keys) -- TODO: Factor out
+noteIndexFromKey k' = (range !!) <$> elemIndex k keys -- TODO: Factor out
   where
     k = head $ T.unpack k'
-    keys = "qwertyuiopas"
-    range = [0..11]
-
-
--- |
-pass :: Monad m => m ()
-pass = return ()
-
-
--- |
-perhaps :: b -> Maybe a -> (a -> b) -> b
-perhaps d mb f = maybe d f mb
+    keys = "qwertyuiopas" -- TODO: Move out key bindings (eg. to JSON file)
+    range = [0..11]       -- TODO: Range should be a setting

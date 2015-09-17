@@ -10,6 +10,12 @@
 
 -- Created September 12 2015
 
+-- TODO | - Streaming service in separate thread (use conduit or mvars)
+--        -
+
+-- SPEC | -
+--        -
+
 
 
 --------------------------------------------------------------------------------------------------------------------------------------------
@@ -28,10 +34,10 @@ module BattleHack.Audio where
 --------------------------------------------------------------------------------------------------------------------------------------------
 -- We'll need these
 --------------------------------------------------------------------------------------------------------------------------------------------
-import Data.Maybe            --
-import Foreign               -- Import the foreigners!
-import Foreign.C.Types       --
-import Control.Monad (liftM) --
+import Data.Maybe                 --
+import Foreign hiding (void)      -- Import the foreigners!
+import Foreign.C.Types             --
+import Control.Monad (liftM, void) --
 import Control.Concurrent    --
 import Control.Applicative
 
@@ -40,6 +46,7 @@ import qualified Data.Vector.Storable.Mutable as VM
 
 import Sound.OpenAL.AL.BasicTypes ()
 import Sound.OpenAL
+-- import Sound.ALUT   as Alut
 
 import BattleHack.Types
 import BattleHack.Utilities.Math
@@ -65,7 +72,8 @@ sampleRate = 44100
 
 -- |
 numSamples :: Integral n => Double -> n --NumSamples
-numSamples      = round . (fromIntegral sampleRate *)
+numSamples secs = round (fromIntegral sampleRate * secs)
+-- numSamples = round . (fromIntegral sampleRate *)
 
 --------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -120,20 +128,20 @@ makebuffer samples = do
     format = Mono16
     fillbuffer buffer mem size = withForeignPtr mem $ \ptr -> bufferData buffer $= BufferData (MemoryRegion (ptr :: Ptr CInt) size) format sampleRate
 
+
 -- |
 stopall :: Source -> IO ()
 stopall source = do
   count <- get $ buffersQueued source
   stop [source]
-  unqueueBuffers source count
-  return ()
+  void $ unqueueBuffers source count
 
 
 -- |
 note :: Source -> Double -> Double -> IO ()
 note source frequency duration = do
-  audiobuffers <- makebuffer (take (numSamples 2) $ sine frequency)
+  audiobuffer <- makebuffer . take (numSamples duration) $ sine frequency
 
-  queueBuffers source [audiobuffers]
+  queueBuffers source [audiobuffer]
   play [source]
-  threadDelay (round duration * 10^6)
+  -- threadDelay (round duration * 10^6)

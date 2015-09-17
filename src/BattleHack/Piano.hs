@@ -9,6 +9,12 @@
 
 -- Created September 12 2015
 
+-- TODO | - Split up into several modules
+--        -
+
+-- SPEC | -
+--        -
+
 
 
 --------------------------------------------------------------------------------------------------------------------------------------------
@@ -36,7 +42,7 @@ import BattleHack.Lenses
 
 
 --------------------------------------------------------------------------------------------------------------------------------------------
--- Functions
+-- Data
 --------------------------------------------------------------------------------------------------------------------------------------------
 -- |
 naturals :: Integral n => [n]
@@ -63,39 +69,95 @@ keysteps = scanl1 (+) [0, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1]
 -- Functions
 --------------------------------------------------------------------------------------------------------------------------------------------
 -- |
-keyOrigin :: PianoSettings -> Int -> Vector
-keyOrigin piano ikey = (ox+sx*shiftX):+oy
+keyorigin :: PianoSettings -> Int -> Vector
+keyorigin piano ikey = (ox+sx*shiftX):+oy
   where
-    (ox:+oy) = piano ^. origin
-    (sx:+_)  = piano ^. keysize
+    (ox:+oy) = piano-->origin
+    (sx:+_)  = piano-->keysize
     shiftX   = keysteps !! (ikey `mod` 12)
 
 
 -- |
-keyLayout :: Int -> KeyLayout
-keyLayout i = chordlayout !! (i `mod` 12)
+keylayout :: Int -> KeyLayout
+keylayout i = chordlayout !! (i `mod` 12)
 
 
 -- |
+-- TODO: Bugs ahead (swat them!)
 inside :: PianoSettings -> KeyLayout -> Vector -> Bool
 inside piano KeyLeft       p = insideBounds piano p && not (insideLeft piano p)
 inside piano KeyRight      p = insideBounds piano p && not (insideRight piano p)
 inside piano KeyBoth       p = insideBounds piano p && not (insideLeft piano p || insideRight piano p)
-inside piano KeyAccidental p = insideRight  piano p || insideLeft piano (p - (realPart (piano ^. keysize):+0))
+inside piano KeyAccidental p = insideRight  piano p || insideLeft piano (p - ((piano-->keysize)-->real:+0))
 
 
 -- | Is the point within the rectangular bounding box of the key?
-insideBounds piano (x:+y) = let (dx:+dy) = piano ^. keysize in between 0 dx x && between 0 dy y
+-- insideBounds ::
+insideBounds piano (x:+y) = let (dx:+dy) = piano-->keysize in between 0 dx x && between 0 dy y
 
 
 -- | Is the point within the left indent of the key?
-insideLeft  piano (x:+y) = let (dx:+dy) = (piano ^. indent):+(piano ^. mid) in between 0 dx y && between 0 dy y
+-- insideLeft ::
+insideLeft  piano (x:+y) = let (dx:+dy) = (piano-->indent):+(piano-->mid) in between 0 dx y && between 0 dy y
 
 
 -- | Is the point within the right indent of the key?
-insideRight piano p = let shiftX = realPart (piano ^. keysize) + (piano ^. indent) in insideLeft piano $ p - (shiftX:+0)
+-- insideRight ::
+insideRight piano p = let shiftX = realPart (piano-->keysize) + (piano-->indent) in insideLeft piano $ p - (shiftX:+0)
 
 
 -- |
 between :: Ord n => n -> n -> n -> Bool
 between lower upper n = lower <= n && n <= upper
+
+
+-- |
+-- TODO: Move to Piano
+-- TODO: Rename (?)
+layout :: RealFloat r => Complex r -> r -> r -> KeyLayout -> [Complex r]
+layout (sx:+sy) indent mid which = case which of
+  KeyRight      -> [nw,  nei,  rmi,         rm, se, sw]
+  KeyBoth       -> [nwi, nei,  rmi,         rm, se, sw, lm, lmi]
+  KeyLeft       -> [nwi, ne,   se,          sw, lm, lmi]
+  KeyAccidental -> [nei, rmi,  (sx:+0)+lmi, (sx:+0)+nwi]
+  where
+    indent' = sx*indent
+    mid'    = sy*mid
+
+    nw = 0:+0   -- North west
+    ne = sx:+0  -- North east
+    se = sx:+sy -- South east
+    sw = 0:+sy  -- South west
+
+    nwi = indent':+0       -- North west indented
+    nei = (sx-indent'):+0  -- North east indented
+
+    lmi = indent':+mid'      -- Left  middle indent
+    rmi = (sx-indent'):+mid' -- Right middle indent
+
+    lm = 0:+mid'  -- Left middle
+    rm = sx:+mid' -- Right middle
+
+
+-- | Rectangular bounds of a key (currently as a topleft, size tuple)
+-- TODO: Use Bounding Box type (?)
+keybounds :: PianoSettings -> Int -> (Vector, Vector)
+keybounds piano i = case keylayout i of
+  KeyAccidental -> (piano-->(keysize.real') - (indent':+0), (2*indent'):+mid')
+  _             -> (0:+0, piano-->keysize)
+  where
+    indent' = piano-->(keysize.real) * piano-->indent
+    mid'    = piano-->(keysize.imag) * piano-->mid
+
+
+-- |
+pitchFromKeyIndex :: RealFloat r => Int -> r
+pitchFromKeyIndex i = let i' = i+4+49 in 440*2**((fromIntegral i'-49)/12) -- TODO: Make sure this is correct, elaborate on the meaning of the different index conversions
+-- pitchFromKeyIndex i = 440*2**((fromIntegral $ i+3 + 12*4-49)/12)
+
+
+-- |
+-- TODO: Refactor
+-- TODO: Use Unicode (?)
+notenameFromKeyIndex :: Int -> String
+notenameFromKeyIndex i = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"] !! mod i 12

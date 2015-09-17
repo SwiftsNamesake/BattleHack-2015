@@ -1,5 +1,5 @@
 -- |
--- Module      : BattleHack.Utilities.Vector
+-- Module      : BattleHack.Utilities.General
 -- Description :
 -- Copyright   : (c) Jonatan H Sundqvist, 2015
 -- License     : MIT
@@ -8,10 +8,10 @@
 -- Portability : POSIX (not sure)
 --
 
--- Created September 14 2015
+-- Created September 16 2015
 
--- TODO | - Is it silly to use Complex Double for everything because of Cairo (yes it is; fixed) (✓)
---        - Many of these functions should probably be moved to Southpaw
+-- TODO | -
+--        -
 
 -- SPEC | -
 --        -
@@ -28,17 +28,14 @@
 --------------------------------------------------------------------------------------------------------------------------------------------
 -- API
 --------------------------------------------------------------------------------------------------------------------------------------------
-module BattleHack.Utilities.Vector where
+module BattleHack.Utilities.General where
 
 
 
 --------------------------------------------------------------------------------------------------------------------------------------------
 -- We'll need these
 --------------------------------------------------------------------------------------------------------------------------------------------
-import Data.Complex
 
-import BattleHack.Types
-import BattleHack.Lenses
 
 
 
@@ -46,15 +43,10 @@ import BattleHack.Lenses
 -- Functions
 --------------------------------------------------------------------------------------------------------------------------------------------
 -- |
-dotwise :: (a -> a -> a) -> Complex a -> Complex a -> Complex a
-dotwise f (x:+y) (x':+y') = f x x':+f y y'
+pass :: Monad m => m ()
+pass = return ()
 
 
 -- |
-dotmap :: (a -> a) -> Complex a -> Complex a
-dotmap f (x:+y) = f x:+f y
-
-
--- |
-toscalar :: (a -> a -> a) -> Complex a -> a
-toscalar f (x:+y) = f x y
+perhaps :: b -> Maybe a -> (a -> b) -> b
+perhaps d mb f = maybe d f mb

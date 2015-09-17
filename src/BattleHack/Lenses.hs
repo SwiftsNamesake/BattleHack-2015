@@ -53,6 +53,10 @@ piano :: Lens AppState AppState PianoSettings PianoSettings
 piano f s = (\new -> s { _piano=new }) <$> f (_piano s)
 
 
+bindings :: Lens AppState AppState KeyMap KeyMap
+bindings f s = (\new -> s { _bindings=new }) <$> f (_bindings s)
+
+
 -- PianoSettings ---------------------------------------------------------------------------------------------------------------------------
 -- |
 origin :: Lens PianoSettings PianoSettings Vector Vector
@@ -80,16 +84,29 @@ active f s = (\new -> s { _active=new }) <$> f (_active s)
 
 
 -- |
-pressed :: Lens PianoSettings PianoSettings [Bool] [Bool]
-pressed f s = (\new -> s { _pressed=new }) <$> f (_pressed s)
+keys :: Lens PianoSettings PianoSettings [Bool] [Bool]
+keys f s = (\new -> s { _keys=new }) <$> f (_keys s)
 
 
 -- Vectors ---------------------------------------------------------------------------------------------------------------------------------
--- |
+-- | Focuses on the real part (X-component) of a vector.
+-- TODO: Real part as vector (eg. x:+y -> x:+0), ditto for imag
 real :: Lens (Complex a) (Complex a) a a
 real f (x:+y) = (:+y) <$> f x
 
 
--- |
+-- | Focuses on the imaginary part (Y-component) of a vector.
 imag :: Lens (Complex a) (Complex a) a a
 imag f (x:+y) = (x:+) <$> f y
+
+
+-- | Like real, except the new type is also a vector.
+-- TODO: Better name (?)
+real' :: Num n => Lens (Complex n) (Complex n) (Complex n) (Complex n)
+real' f (x:+y) = id <$> f (x:+0)
+
+
+-- | Like imag, except the new type is also a vector.
+-- TODO: Better name (?)
+imag' :: Num n => Lens (Complex n) (Complex n) (Complex n) (Complex n)
+imag' f (x:+y) = id <$> f (0:+y)

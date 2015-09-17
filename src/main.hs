@@ -38,12 +38,14 @@ import Text.Printf
 import Data.IORef
 import Data.Complex
 import Data.StateVar
+import qualified Data.Map  as M
 
 import qualified Graphics.Rendering.Cairo as Cairo
 import           Graphics.UI.Gtk          as Gtk
 import           Graphics.UI.Gtk          (AttrOp(..), on)
 
 import Sound.OpenAL
+-- import qualified Sound.ALUT   as Alut
 
 -- Internal module imports
 import           BattleHack.Types
@@ -69,6 +71,7 @@ main = do
   containerAdd frame canvas
   set window [ containerChild := frame ]
   windowSetDefaultSize window (round winx) (round winy)
+  windowSetIconFromFile window "assets/images/gclef.png"
 
   widgetAddEvents canvas [PointerMotionMask] -- MouseButton1Mask
   widgetShowAll window
@@ -84,8 +87,9 @@ main = do
                                                              _indent  = 0.26,
                                                              _mid     = 0.62,
                                                              _active  = Nothing,
-                                                             _pressed = replicate 12 False },
-                                    _source = source }
+                                                             _keys    = replicate 12 False },
+                                    _source   = source,
+                                    _bindings = M.fromList [("Escape", Cairo.liftIO mainQuit)] }
 
   -- Register event handlers
   window `on` deleteEvent        $ Events.ondelete      stateref
