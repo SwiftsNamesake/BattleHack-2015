@@ -153,7 +153,7 @@ keybounds piano i = case keylayout i of
 
 -- |
 pitchFromKeyIndex :: RealFloat r => Int -> r
-pitchFromKeyIndex i = let i' = i+4+49 in 440*2**((fromIntegral i'-49)/12) -- TODO: Make sure this is correct, elaborate on the meaning of the different index conversions
+pitchFromKeyIndex i = let i' = i+4+49 in 440.0*2.0**((fromIntegral i' - 49)/12.0) -- TODO: Make sure this is correct, elaborate on the meaning of the different index conversions
 -- pitchFromKeyIndex i = 440*2**((fromIntegral $ i+3 + 12*4-49)/12)
 
 

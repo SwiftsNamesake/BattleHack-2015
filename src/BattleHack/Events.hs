@@ -144,6 +144,7 @@ onkeydown stateref = do
 
   Cairo.liftIO $ do
     -- Do yourself a favour and pretend you never saw this mess
+    print key
     let mikey = noteIndexFromKey key
     modifyIORef stateref (setactive key)
     perhaps pass mikey $ \ikey -> modifyIORef stateref (piano.keys.ix ikey .~ True)

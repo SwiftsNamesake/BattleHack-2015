@@ -38,6 +38,7 @@ import Text.Printf
 import Data.IORef
 import Data.Complex
 import Data.StateVar
+import qualified Data.Set  as S
 import qualified Data.Map  as M
 
 import qualified Graphics.Rendering.Cairo as Cairo
@@ -49,9 +50,10 @@ import Sound.OpenAL
 
 -- Internal module imports
 import           BattleHack.Types
-import qualified BattleHack.Render as Render
-import qualified BattleHack.Events as Events
-import qualified BattleHack.Audio  as Audio
+import qualified BattleHack.Render  as Render
+import qualified BattleHack.Events  as Events
+import qualified BattleHack.Audio   as Audio
+import qualified BattleHack.Window  as Window
 
 
 
@@ -61,23 +63,10 @@ import qualified BattleHack.Audio  as Audio
 -- |
 main :: IO ()
 main = do
-  initGUI
-  window <- windowNew
-  frame  <- frameNew
-
-  set window [windowTitle := "Chordially"]
-
-  canvas <- drawingAreaNew
-  containerAdd frame canvas
-  set window [ containerChild := frame ]
-  windowSetDefaultSize window (round winx) (round winy)
-  windowSetIconFromFile window "assets/images/gclef.png"
-
-  widgetAddEvents canvas [PointerMotionMask] -- MouseButton1Mask
-  widgetShowAll window
+  (window, canvas) <- Window.create winsize -- Window
 
   -- Audio
-  Just device <- Audio.setup -- TODO: Return context as well (probably a good idea)
+  Just (context, device) <- Audio.setup -- TODO: Return context as well (probably a good idea) (✓)
   [source]    <- genObjectNames 1
   -- audiobuffers <- mapM (\f -> Audio.makebuffer (take (Audio.numSamples 2) $ Audio.sine f)) [440*2**(n/12) | n <- [6, 0, 6, 0]]
 
@@ -88,21 +77,12 @@ main = do
                                                              _mid     = 0.62,
                                                              _active  = Nothing,
                                                              _keys    = replicate 12 False },
-                                    _source   = source,
+
+                                    _inputstate = InputState { _mouse=0:+0, _keyboard=S.empty },
+                                    _source     = source,
                                     _bindings = M.fromList [("Escape", Cairo.liftIO mainQuit)] }
 
-  -- Register event handlers
-  window `on` deleteEvent        $ Events.ondelete      stateref
-  window `on` motionNotifyEvent  $ Events.onmousemotion stateref
-
-  window `on` buttonPressEvent   $ Events.onmousedown stateref
-  window `on` buttonReleaseEvent $ Events.onmouseup   stateref
-
-  window `on` keyPressEvent      $ Events.onkeydown stateref
-  window `on` keyReleaseEvent    $ Events.onkeyup   stateref
-
-  canvas `on` scrollEvent        $ Events.onwheelscrool stateref
-  canvas `on` draw               $ Events.ondraw        stateref
+  Window.bindevents window canvas stateref -- Register event handlers
 
   timeoutAdd (Events.onanimate canvas stateref) (1000 `div` fps)
 
@@ -112,7 +92,7 @@ main = do
     fps = 30
     origin'@(ox:+oy)  = 20:+20
     keysize'@(sx:+sy) = (4:+13) * 40
-    (winx:+winy)      = (sx*7:+sy) + 2*origin'
+    winsize           = (sx*7:+sy) + 2*origin'
 
 
 -- | Just a little hello world snippet to make sure everything is set up properly.

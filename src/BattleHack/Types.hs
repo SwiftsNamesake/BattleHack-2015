@@ -34,6 +34,7 @@ module BattleHack.Types where
 -- We'll need these
 --------------------------------------------------------------------------------------------------------------------------------------------
 import Data.Complex
+import qualified Data.Set as S
 import qualified Data.Map as M
 import Sound.OpenAL
 
@@ -63,7 +64,15 @@ data KeyLayout = KeyLeft | KeyRight | KeyBoth | KeyAccidental deriving (Show)
 
 
 -- |
-data AppState = AppState { _piano :: PianoSettings, _source :: Source, _bindings :: KeyMap } -- deriving (Show)
+data AppState = AppState { _piano      :: PianoSettings,
+                           _source     :: Source,
+                           _bindings   :: KeyMap,
+                           _inputstate :: InputState } -- deriving (Show)
+
+
+-- |
+data InputState =  InputState { _mouse    :: Vector,
+                                _keyboard :: S.Set String }
 
 
 -- |
