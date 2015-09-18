@@ -92,18 +92,18 @@ inside piano KeyAccidental p = insideRight  piano p || insideLeft piano (p - ((p
 
 
 -- | Is the point within the rectangular bounding box of the key?
--- insideBounds ::
+insideBounds :: PianoSettings -> Vector -> Bool
 insideBounds piano (x:+y) = let (dx:+dy) = piano-->keysize in between 0 dx x && between 0 dy y
 
 
 -- | Is the point within the left indent of the key?
--- insideLeft ::
-insideLeft  piano (x:+y) = let (dx:+dy) = (piano-->indent):+(piano-->mid) in between 0 dx y && between 0 dy y
+insideLeft :: PianoSettings -> Vector -> Bool
+insideLeft  piano (x:+y) = let (dx:+dy) = piano-->indent :+ piano-->mid in between 0 dx x && between 0 dy y
 
 
 -- | Is the point within the right indent of the key?
--- insideRight ::
-insideRight piano p = let shiftX = realPart (piano-->keysize) + (piano-->indent) in insideLeft piano $ p - (shiftX:+0)
+insideRight :: PianoSettings -> Vector -> Bool
+insideRight piano p = let shiftX = piano-->keysize.real + piano-->indent in insideLeft piano $ p - (shiftX:+0)
 
 
 -- |
@@ -143,11 +143,11 @@ layout (sx:+sy) indent mid which = case which of
 -- TODO: Use Bounding Box type (?)
 keybounds :: PianoSettings -> Int -> (Vector, Vector)
 keybounds piano i = case keylayout i of
-  KeyAccidental -> (piano-->(keysize.real') - (indent':+0), (2*indent'):+mid')
+  KeyAccidental -> (piano-->keysize.real' - (indent':+0), (2*indent'):+mid')
   _             -> (0:+0, piano-->keysize)
   where
-    indent' = piano-->(keysize.real) * piano-->indent
-    mid'    = piano-->(keysize.imag) * piano-->mid
+    indent' = piano-->keysize.real * piano-->indent
+    mid'    = piano-->keysize.imag * piano-->mid
 
 
 -- |

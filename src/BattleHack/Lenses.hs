@@ -46,6 +46,9 @@ import BattleHack.Types
 (-->) :: b -> Getting a b a -> a
 (-->) = (^.)
 
+infix 8 --> -- Slightly lower precedence than the '.' operator
+
+
 
 -- AppState --------------------------------------------------------------------------------------------------------------------------------
 -- |
