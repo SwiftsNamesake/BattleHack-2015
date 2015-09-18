@@ -151,8 +151,7 @@ keybounds piano i = case keylayout i of
   KeyAccidental -> (piano-->keysize.real' - (indent':+0), (2*indent'):+mid')
   _             -> (0:+0, piano-->keysize)
   where
-    indent' = piano-->keysize.real * piano-->indent
-    mid'    = piano-->keysize.imag * piano-->mid
+    (indent':+mid') = dotwise (*) (piano-->keysize) (piano-->indent:+piano-->mid)
 
 
 -- |
@@ -171,3 +170,13 @@ octaveFromKeyIndex = fromIntegral . (`div` 12)
 -- TODO: Use Unicode (?)
 notenameFromKeyIndex :: Int -> String
 notenameFromKeyIndex i = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"] !! mod i 12
+
+
+-- | The indeces of every natural key in order, starting at C0 (index 0)
+allnaturals :: [Int]
+allnaturals = zipWith (\i key -> div i 7 * 12 + key) [0..] naturals
+
+
+-- | The indeces of every accidental key in order, starting at C#0 (index 1)
+allaccidentals :: [Int]
+allaccidentals = zipWith (\i key -> div i 5 * 12 + key) [0..] accidentals

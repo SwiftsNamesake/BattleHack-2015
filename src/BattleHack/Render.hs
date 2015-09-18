@@ -66,7 +66,7 @@ polygon (p:oints) = vectorise Cairo.moveTo p >> forM_ (oints) (vectorise Cairo.l
 key :: PianoSettings -> Int -> Cairo.Render ()
 key piano i = do
   polygon . map (+Piano.keyorigin piano i) $ keylayout
-  let (r, g, b, a) = colour (i `mod` 12) in Cairo.setSourceRGBA r g b a
+  let (r, g, b, a) = colour i in Cairo.setSourceRGBA r g b a
   Cairo.fill
 
   keylabel piano i
@@ -74,10 +74,10 @@ key piano i = do
   where
     keylayout = Piano.layout (piano-->keysize) (piano-->indent) (piano-->mid) (Piano.keylayout i) :: [Complex Double]
     colour ikey
-      | (piano-->keys) !! ikey        = (0.3, 0.12, 0.22, 1.0)
-      | Just ikey == (piano-->active) = (0.3, 0.12, 0.22, 1.0)
-      | ikey `elem` Piano.naturals    = (0.4, 1/7 * fromIntegral (ikey `mod` 7), 0.75, 1.00)
-      | otherwise                     = (0.0, 0.0,                               0.00, 1.00)
+      | (piano-->keys) !! ikey            = (0.3, 0.12, 0.22, 1.0)
+      | Just ikey == (piano-->active)     = (0.3, 0.12, 0.22, 1.0)
+      | mod ikey 12 `elem` Piano.naturals = (0.4, 1/7 * fromIntegral (ikey `mod` 7), 0.75, 1.00)
+      | otherwise                         = (0.0, 0.0,                               0.00, 1.00)
 
 
 -- |

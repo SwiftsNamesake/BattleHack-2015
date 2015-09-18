@@ -151,7 +151,7 @@ onkeydown stateref = do
       print key
       maybe pass id (M.lookup (T.unpack key) bindings) -- Invoke the command bound to this key (if any)
       let mikey = noteIndexFromKey key
-      modifyIORef stateref (setactive key)
+      -- modifyIORef stateref (setactive key)
       perhaps pass mikey $ \ikey -> modifyIORef stateref (piano.keys.ix ikey .~ True)
 
       perhaps pass (noteIndexFromKey key) $ \iactive -> do
@@ -160,8 +160,8 @@ onkeydown stateref = do
         void . forkIO $ Audio.note (_source appstate) (Piano.pitchFromKeyIndex iactive) 1.0 -- TODO: Do not hard code duration
 
   return False
-  where
-    setactive key = piano.active .~ noteIndexFromKey key
+  -- where
+  --   setactive key = piano.active .~ noteIndexFromKey key
 
 
 -- |
@@ -174,7 +174,7 @@ onkeyup stateref = do
     modifyIORef stateref (inputstate.keyboard %~ S.delete (T.unpack key)) -- Mark key as pressed
     let mikey = noteIndexFromKey key
     Audio.stopall source
-    modifyIORef stateref (piano.active .~ Nothing)
+    -- modifyIORef stateref (piano.active .~ Nothing)
     perhaps pass mikey $ \ikey -> modifyIORef stateref (piano.keys.ix ikey .~ False)
 
   return False
@@ -183,8 +183,9 @@ onkeyup stateref = do
 -- Utilities -------------------------------------------------------------------------------------------------------------------------------
 -- |
 noteIndexFromKey :: T.Text -> Maybe Int
-noteIndexFromKey k' = (range !!) <$> elemIndex k keys -- TODO: Factor out
+noteIndexFromKey k' = M.lookup k mapping -- TODO: Factor out
   where
     k = head $ T.unpack k'
-    keys = "qwertyuiopas" -- TODO: Move out key bindings (eg. to JSON file)
-    range = [0..11]       -- TODO: Range should be a setting
+    mapping = M.fromList $ zip "asdfghjklöä" Piano.allnaturals ++ zip "wetyupå"  Piano.allaccidentals
+    -- keys = "asdfghjklöä" ++ "we tyu på" -- TODO: Move out key bindings (eg. to JSON file)
+    -- range = map ((0*12)+) Piano.naturals      -- TODO: Range should be a setting
