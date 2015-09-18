@@ -49,6 +49,7 @@ import BattleHack.Types
 infix 8 --> -- Slightly lower precedence than the '.' operator
 
 
+
 -- AppState --------------------------------------------------------------------------------------------------------------------------------
 -- |
 piano :: Lens AppState AppState PianoSettings PianoSettings
@@ -97,7 +98,7 @@ real :: Lens (Complex a) (Complex a) a a
 real f (x:+y) = (:+y) <$> f x
 
 
---- | Focuses on the imaginary part (Y-component) of a vector.
+-- | Focuses on the imaginary part (Y-component) of a vector.
 imag :: Lens (Complex a) (Complex a) a a
 imag f (x:+y) = (x:+) <$> f y
 
@@ -105,10 +106,10 @@ imag f (x:+y) = (x:+) <$> f y
 -- | Like real, except the new type is also a vector.
 -- TODO: Better name (?)
 real' :: Num n => Lens (Complex n) (Complex n) (Complex n) (Complex n)
-real' f (x:+_) = id <$> f (x:+0)
+real' f (x:+y) = id <$> f (x:+0)
 
 
 -- | Like imag, except the new type is also a vector.
 -- TODO: Better name (?)
 imag' :: Num n => Lens (Complex n) (Complex n) (Complex n) (Complex n)
-imag' f (_:+y) = id <$> f (0:+y)
+imag' f (x:+y) = id <$> f (0:+y)

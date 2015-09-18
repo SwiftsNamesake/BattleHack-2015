@@ -72,29 +72,41 @@ key piano i = do
   keylabel piano i
   Cairo.fill
   where
-    keylayout = Piano.layout (piano-->keysize) (piano-->indent) (piano-->mid) (Piano.keyLayout i) :: [Complex Double]
+    keylayout = Piano.layout (piano-->keysize) (piano-->indent) (piano-->mid) (Piano.keylayout i) :: [Complex Double]
     colour ikey
-      | (piano ^. keys) !! ikey        = (0.3, 0.12, 0.22, 1.0)
-      | Just ikey == (piano ^. active) = (0.3, 0.12, 0.22, 1.0)
-      | ikey `elem` Piano.naturals     = (0.4, 1/7 * fromIntegral (ikey `mod` 7), 0.75, 1.00)
-      | otherwise                      = (0.0, 0.0,                               0.00, 1.00)
+      | (piano-->keys) !! ikey        = (0.3, 0.12, 0.22, 1.0)
+      | Just ikey == (piano-->active) = (0.3, 0.12, 0.22, 1.0)
+      | ikey `elem` Piano.naturals    = (0.4, 1/7 * fromIntegral (ikey `mod` 7), 0.75, 1.00)
+      | otherwise                     = (0.0, 0.0,                               0.00, 1.00)
 
 
 -- |
 keylabel :: PianoSettings -> Int -> Cairo.Render ()
 keylabel piano i = do
-  vectorise Cairo.moveTo (Piano.keyOrigin piano i + 0.9*(0:+piano-->keysize-->imag)) -- $ (piano-->origin) + dotwise (*) (piano-->keysize) (0.5:+0.8) -- ((piano-->keysize.real)/2:+(piano-->keysize.imag * 0.8))
+  -- vectorise Cairo.moveTo (Piano.keyorigin piano i + 0.9*(0:+piano-->keysize-->imag)) -- $ (piano-->origin) + dotwise (*) (piano-->keysize) (0.5:+0.8) -- ((piano-->keysize.real)/2:+(piano-->keysize.imag * 0.8))
+  let (o, sz) = Piano.keybounds piano i
+  -- vectorise Cairo.moveTo (Piano.keyorigin piano i + o + dotwise (*) sz (0.5:+0.95))
   -- vectorise Cairo.moveTo (20:+20)
-  Cairo.setFontSize 48
+  Cairo.setFontSize (if i `elem` Piano.naturals then 48 else 22)
   Cairo.setSourceRGBA 0.20 0.12 0.08 1.00
-  Cairo.showText (Piano.notenameFromKeyIndex i)
+  centredText (Piano.keyorigin piano i + o + dotwise (*) sz (0.5:+0.90)) (Piano.notenameFromKeyIndex i)
 
 
 -- |
 claviature :: PianoSettings -> Cairo.Render ()
 claviature settings = do
-  forM_ [0..11] $ \ikey -> do
+  forM_ (zipWith const [0..] (settings-->keys)) $ \ikey -> do
     key settings ikey
+
+
+-- | Borrowed from Southpaw
+-- TODO: General anchor (?)
+centredText :: Complex Double -> String -> Cairo.Render ()
+centredText (cx:+cy) text = do
+	extents <- Cairo.textExtents text
+	let (w, h) = (Cairo.textExtentsWidth extents, Cairo.textExtentsHeight extents)
+	Cairo.moveTo (cx-w/2) (cy+h/2)
+	Cairo.showText text
 
 
 -- Menu ------------------------------------------------------------------------------------------------------------------------------------
