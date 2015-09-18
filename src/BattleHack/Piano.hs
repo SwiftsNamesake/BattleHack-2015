@@ -38,6 +38,7 @@ import Data.Complex
 
 import BattleHack.Types
 import BattleHack.Lenses
+import BattleHack.Utilities.Vector
 
 
 
@@ -98,7 +99,7 @@ insideBounds piano (x:+y) = let (dx:+dy) = piano-->keysize in between 0 dx x && 
 
 -- | Is the point within the left indent of the key?
 insideLeft :: PianoSettings -> Vector -> Bool
-insideLeft  piano (x:+y) = let (dx:+dy) = piano-->indent :+ piano-->mid in between 0 dx x && between 0 dy y
+insideLeft  piano (x:+y) = let (dx:+dy) = dotwise (*) (piano-->indent :+ piano-->mid) (piano-->keysize) in between 0 dx x && between 0 dy y
 
 
 -- | Is the point within the right indent of the key?
