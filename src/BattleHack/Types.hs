@@ -71,6 +71,7 @@ data AppState = AppState { _piano      :: PianoSettings,
 
 
 -- |
+-- TODO: Use custom key type or text (?)
 data InputState =  InputState { _mouse    :: Vector,
                                 _keyboard :: S.Set String }
 

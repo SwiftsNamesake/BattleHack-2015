@@ -69,10 +69,9 @@ main = do
   -- Audio
   Just (context, device) <- Audio.setup -- TODO: Return context as well (probably a good idea) (✓)
   [source]    <- genObjectNames 1
-  -- audiobuffers <- mapM (\f -> Audio.makebuffer (take (Audio.numSamples 2) $ Audio.sine f)) [440*2**(n/12) | n <- [6, 0, 6, 0]]
 
   -- App state
-  stateref <- newIORef (initalstate 12 origin' keysize' source)
+  stateref <- newIORef (initalstate 24 origin' keysize' source)
 
   -- Register event handlers
   Window.bindevents window canvas stateref
@@ -93,15 +92,15 @@ main = do
 -- TODO: Piano range
 initalstate :: Int -> Vector -> Vector -> Source -> AppState
 initalstate nkeys origin' keysize' source = AppState { _piano = PianoSettings { _origin  = origin',
-                                                  _keysize = keysize',
-                                                  _indent  = 0.26,
-                                                  _mid     = 0.62,
-                                                  _active  = Nothing,
-                                                  _keys    = replicate nkeys False },
+                                                                                _keysize = keysize',
+                                                                                _indent  = 0.26,
+                                                                                _mid     = 0.62,
+                                                                                _active  = Nothing,
+                                                                                _keys    = replicate nkeys False },
 
-                                  _inputstate = InputState { _mouse=0:+0, _keyboard=S.empty },
-                                  _source     = source,
-                                  _bindings = M.fromList [("Escape", Cairo.liftIO mainQuit)] }
+                                                       _inputstate = InputState { _mouse=0:+0, _keyboard=S.empty },
+                                                       _source     = source,
+                                                       _bindings = M.fromList [("Escape", Cairo.liftIO mainQuit)] }
 
 
 -- | Just a little hello world snippet to make sure everything is set up properly.

@@ -66,7 +66,7 @@ polygon (p:oints) = vectorise Cairo.moveTo p >> forM_ (oints) (vectorise Cairo.l
 key :: PianoSettings -> Int -> Cairo.Render ()
 key piano i = do
   polygon . map (+Piano.keyorigin piano i) $ keylayout
-  let (r, g, b, a) = colour i in Cairo.setSourceRGBA r g b a
+  let (r, g, b, a) = colour (i `mod` 12) in Cairo.setSourceRGBA r g b a
   Cairo.fill
 
   keylabel piano i
@@ -87,7 +87,7 @@ keylabel piano i = do
   let (o, sz) = Piano.keybounds piano i
   -- vectorise Cairo.moveTo (Piano.keyorigin piano i + o + dotwise (*) sz (0.5:+0.95))
   -- vectorise Cairo.moveTo (20:+20)
-  Cairo.setFontSize (if i `elem` Piano.naturals then 48 else 22)
+  Cairo.setFontSize (if (i `mod` 12) `elem` Piano.naturals then 48 else 22)
   Cairo.setSourceRGBA 0.20 0.12 0.08 1.00
   centredText (Piano.keyorigin piano i + o + dotwise (*) sz (0.5:+0.90)) (Piano.notenameFromKeyIndex i)
 

@@ -28,10 +28,11 @@ module BattleHack.Lenses where
 --------------------------------------------------------------------------------------------------------------------------------------------
 -- We'll need these
 --------------------------------------------------------------------------------------------------------------------------------------------
+-- import Control.Monad
 import Control.Lens
 import Data.Functor ((<$>))
 import Data.Complex
--- import Control.Monad
+import qualified Data.Set as S
 
 import BattleHack.Types
 
@@ -58,6 +59,20 @@ piano f s = (\new -> s { _piano=new }) <$> f (_piano s)
 
 bindings :: Lens AppState AppState KeyMap KeyMap
 bindings f s = (\new -> s { _bindings=new }) <$> f (_bindings s)
+
+
+inputstate :: Lens AppState AppState InputState InputState
+inputstate f s = (\new -> s { _inputstate=new }) <$> f (_inputstate s)
+
+
+-- InputState ------------------------------------------------------------------------------------------------------------------------------
+-- |
+mouse :: Lens InputState InputState Vector Vector
+mouse f s = (\new -> s { _mouse=new }) <$> f (_mouse s)
+
+
+keyboard :: Lens InputState InputState (S.Set String) (S.Set String)
+keyboard f s = (\new -> s { _keyboard=new }) <$> f (_keyboard s)
 
 
 -- PianoSettings ---------------------------------------------------------------------------------------------------------------------------

@@ -58,3 +58,8 @@ dotmap f (x:+y) = f x:+f y
 -- |
 toscalar :: (a -> a -> a) -> Complex a -> a
 toscalar f (x:+y) = f x y
+
+
+--  | Converts a 2-tuple to a vector
+tovector :: (a, a) -> Complex a
+tovector =  uncurry (:+)

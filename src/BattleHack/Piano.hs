@@ -71,11 +71,10 @@ keysteps = scanl1 (+) [0, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1]
 --------------------------------------------------------------------------------------------------------------------------------------------
 -- |
 keyorigin :: PianoSettings -> Int -> Vector
-keyorigin piano ikey = (ox+sx*shiftX):+oy
+keyorigin piano i = piano-->origin + (sx*shiftx :+ 0)
   where
-    (ox:+oy) = piano-->origin
     (sx:+_)  = piano-->keysize
-    shiftX   = keysteps !! (ikey `mod` 12)
+    shiftx   = 7*octaveFromKeyIndex i + (keysteps !! (i `mod` 12))
 
 
 -- |
@@ -83,13 +82,15 @@ keylayout :: Int -> KeyLayout
 keylayout i = chordlayout !! (i `mod` 12)
 
 
--- |
+-- | Is the point inside the bounds of the given key?
+--   Note that the function assumes that the key is pinned to the origin.
 -- TODO: Bugs ahead (swat them!)
+-- TODO: Rename (?)
 inside :: PianoSettings -> KeyLayout -> Vector -> Bool
 inside piano KeyLeft       p = insideBounds piano p && not (insideLeft piano p)
 inside piano KeyRight      p = insideBounds piano p && not (insideRight piano p)
 inside piano KeyBoth       p = insideBounds piano p && not (insideLeft piano p || insideRight piano p)
-inside piano KeyAccidental p = insideRight  piano p || insideLeft piano (p - ((piano-->keysize)-->real:+0))
+inside piano KeyAccidental p = insideLeft   piano p || insideRight piano p
 
 
 -- | Is the point within the rectangular bounding box of the key?
@@ -103,8 +104,11 @@ insideLeft  piano (x:+y) = let (dx:+dy) = dotwise (*) (piano-->indent :+ piano--
 
 
 -- | Is the point within the right indent of the key?
+-- TODO: Buggy!
 insideRight :: PianoSettings -> Vector -> Bool
-insideRight piano p = let shiftX = piano-->keysize.real + piano-->indent in insideLeft piano $ p - (shiftX:+0)
+insideRight piano p = let shiftx = piano-->keysize.real * (piano-->indent - 1) in insideLeft piano $ p + (shiftx:+0)
+-- insideRight piano p = let shiftx = piano-->keysize.real * (1 - piano-->indent) in insideLeft piano $ p - (piano-->keysize.real:+0) + ((piano-->keysize.real*piano-->indent):+0)
+-- insideRight piano (x:+y) = between ()
 
 
 -- |
@@ -155,6 +159,11 @@ keybounds piano i = case keylayout i of
 pitchFromKeyIndex :: RealFloat r => Int -> r
 pitchFromKeyIndex i = let i' = i+4+49 in 440.0*2.0**((fromIntegral i' - 49)/12.0) -- TODO: Make sure this is correct, elaborate on the meaning of the different index conversions
 -- pitchFromKeyIndex i = 440*2**((fromIntegral $ i+3 + 12*4-49)/12)
+
+
+-- | Which octave does the key belong to (the 0th octave starts with C0, the 1st with C1; no overlap between octaves)
+octaveFromKeyIndex :: RealFloat r => Int -> r
+octaveFromKeyIndex = fromIntegral . (`div` 12)
 
 
 -- |
