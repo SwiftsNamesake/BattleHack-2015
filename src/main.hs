@@ -67,11 +67,14 @@ main = do
   (window, canvas) <- Window.create winsize
 
   -- Audio
+  -- TODO: Utility function for accessing range indeces
+  -- TODO: Don't hard-code range
   Just (context, device) <- Audio.setup -- TODO: Return context as well (probably a good idea) (✓)
-  [source]    <- genObjectNames 1
+  claviature'            <- Audio.makebuffersFromIndeces (zipWith const [0..] $ replicate 24 False)
+  -- [source]    <- genObjectNames 1
 
   -- App state
-  stateref <- newIORef (initalstate 24 origin' keysize' source)
+  stateref <- newIORef (initalstate 24 origin' keysize' claviature')
 
   -- Register event handlers
   Window.bindevents window canvas stateref
@@ -90,8 +93,8 @@ main = do
 
 -- | Initial application state
 -- TODO: Piano range
-initalstate :: Int -> Vector -> Vector -> Source -> AppState
-initalstate nkeys origin' keysize' source = AppState { _piano = PianoSettings { _origin  = origin',
+initalstate :: Int -> Vector -> Vector -> Claviature -> AppState
+initalstate nkeys origin' keysize' claviature' = AppState { _piano = PianoSettings { _origin  = origin',
                                                                                 _keysize = keysize',
                                                                                 _indent  = 0.26,
                                                                                 _mid     = 0.62,
@@ -101,8 +104,8 @@ initalstate nkeys origin' keysize' source = AppState { _piano = PianoSettings { 
                                                        _animation = AnimationData { _frame = 0,
                                                                                     _fps   = 30 },
 
+                                                       _claviature = claviature',
                                                        _inputstate = InputState { _mouse=0:+0, _keyboard=S.empty },
-                                                       _source     = source,
                                                        _bindings = M.fromList [("Escape", Cairo.liftIO mainQuit)] }
 
 

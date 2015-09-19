@@ -59,6 +59,10 @@ data KeyLayout = KeyLeft | KeyRight | KeyBoth | KeyAccidental deriving (Show)
 
 
 -- |
+type Claviature = [(Source, Buffer)]
+
+
+-- |
 -- data Note = C Pitch | D Pitch | E Pitch | F Pitch | G Pitch | A Pitch | B Pitch deriving (Show)
 -- data Pitch = Sharp | Flat | Natural                                             deriving (Show)
 
@@ -70,8 +74,10 @@ data AnimationData = AnimationData { _frame :: Int,
 
 
 -- |
+-- TODO: Slightly less confusing names (piano vs claviature)
 data AppState = AppState { _piano      :: PianoSettings,
-                           _source     :: Source,
+                           _claviature :: Claviature,
+                          --  _source     :: Source,
                            _animation  :: AnimationData,
                            _bindings   :: KeyMap,
                            _inputstate :: InputState } -- deriving (Show)

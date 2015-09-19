@@ -101,8 +101,8 @@ onmousemotion stateref = do
   where
     -- TODO: Simplify
     -- TODO: Don't hard-code the range
-    setactive mouse' appstate    = appstate & piano.active .~ find (hoveredKey (appstate-->piano) mouse') (zipWith const [0..] (appstate-->piano.keys))
-    hoveredKey piano mouse' ikey = Piano.inside piano (Piano.keylayout ikey) (mouse'-Piano.keyorigin piano ikey)
+    -- TODO: This is a pretty dumb algorithm for finding hovered-over keys
+    setactive mouse' appstate = appstate & piano.active .~ find (Piano.insideFromKeyIndex (appstate-->piano) mouse') (zipWith const [0..] (appstate-->piano.keys))
 
 
 -- |
@@ -112,8 +112,9 @@ onmousedown stateref = do
     -- Do yourself a favour and pretend you never saw this mess
     appstate <- readIORef stateref
     perhaps pass (appstate-->piano.active) $ \ikey -> do
-      loopingMode (_source appstate) $= [OneShot, Looping] !! 1 -- Easy toggling
-      void . forkIO $ Audio.note (_source appstate) (Piano.pitchFromKeyIndex ikey) 1.0 -- TODO: Do not hard code duration
+      -- loopingMode (_source appstate) $= [OneShot, Looping] !! 1 -- Easy toggling
+      -- void . forkIO $ Audio.note (_source appstate) (Piano.pitchFromKeyIndex ikey) 1.0 -- TODO: Do not hard code duration
+      void $ Audio.playnote (appstate-->claviature) ikey
   return False
 
 
@@ -121,8 +122,11 @@ onmousedown stateref = do
 onmouseup :: IORef AppState -> EventM EButton Bool
 onmouseup stateref = do
   -- TODO: Implement note press and release properly
-  source <- Cairo.liftIO $ liftM _source $ readIORef stateref
-  Cairo.liftIO $ Audio.stopall source
+  -- source <- Cairo.liftIO $ liftM _source $ readIORef stateref
+  Cairo.liftIO $ do
+    appstate <- readIORef stateref
+    -- Cairo.liftIO $ Audio.stopall source
+    perhaps pass (appstate-->piano.active) $ \i -> void $ Audio.stopnote (appstate-->claviature) i
   return False
 
 
@@ -160,8 +164,9 @@ onkeydown stateref = do
 
       perhaps pass (noteIndexFromKey key) $ \iactive -> do
         appstate <- readIORef stateref
-        loopingMode (_source appstate) $= [OneShot, Looping] !! 1 -- Easy toggling
-        void . forkIO $ Audio.note (_source appstate) (Piano.pitchFromKeyIndex iactive) 1.0 -- TODO: Do not hard code duration
+        -- loopingMode (_source appstate) $= [OneShot, Looping] !! 1 -- Easy toggling
+        -- void . forkIO $ Audio.note (_source appstate) (Piano.pitchFromKeyIndex iactive) 1.0 -- TODO: Do not hard code duration
+        void $ Audio.playnote (appstate-->claviature) iactive
 
   return False
   -- where
@@ -173,13 +178,16 @@ onkeyup :: IORef AppState -> EventM EKey Bool
 onkeyup stateref = do
   key <- eventKeyName -- TODO: Use key val?
   -- TODO: Implement note press and release properly
-  source <- Cairo.liftIO $ liftM _source $ readIORef stateref
+  -- source <- Cairo.liftIO $ liftM _source $ readIORef stateref
   Cairo.liftIO $ do
     modifyIORef stateref (inputstate.keyboard %~ S.delete (T.unpack key)) -- Mark key as pressed
     let mikey = noteIndexFromKey key
-    Audio.stopall source
+    appstate <- readIORef stateref
+    -- Audio.stopall source
     -- modifyIORef stateref (piano.active .~ Nothing)
-    perhaps pass mikey $ \ikey -> modifyIORef stateref (piano.keys.ix ikey .~ False)
+    perhaps pass mikey $ \i -> do
+      Audio.stopnote (appstate-->claviature) i
+      modifyIORef stateref (piano.keys.ix i .~ False)
 
   return False
 

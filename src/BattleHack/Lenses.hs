@@ -69,6 +69,14 @@ animation :: Lens AppState AppState AnimationData AnimationData
 animation f s = (\new -> s { _animation=new }) <$> f (_animation s)
 
 
+-- source :: Lens AppState AppState Source Source
+-- source f s = (\new -> s { _source=new }) <$> f (_source s)
+
+
+claviature :: Lens AppState AppState Claviature Claviature
+claviature f s = (\new -> s { _claviature=new }) <$> f (_claviature s)
+
+
 -- AnimationData ---------------------------------------------------------------------------------------------------------------------------
 frame :: Lens AnimationData AnimationData Int Int
 frame f s = (\new -> s { _frame=new }) <$> f (_frame s)

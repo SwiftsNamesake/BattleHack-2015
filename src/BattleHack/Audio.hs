@@ -34,12 +34,12 @@ module BattleHack.Audio where
 --------------------------------------------------------------------------------------------------------------------------------------------
 -- We'll need these
 --------------------------------------------------------------------------------------------------------------------------------------------
-import Data.Maybe                 --
-import Foreign hiding (void)      -- Import the foreigners!
-import Foreign.C.Types             --
-import Control.Monad (liftM, void) --
-import Control.Concurrent    --
-import Control.Applicative
+import Data.Maybe                        --
+import Foreign hiding (void)             -- Import the foreigners!
+import Foreign.C.Types                   --
+import Control.Monad (liftM, void, forM) --
+import Control.Concurrent                --
+import Control.Applicative               --
 
 import qualified Data.Vector.Storable         as V
 import qualified Data.Vector.Storable.Mutable as VM
@@ -50,6 +50,7 @@ import Sound.OpenAL
 
 import BattleHack.Types
 import BattleHack.Utilities.Math
+import qualified BattleHack.Piano as Piano
 
 
 
@@ -130,18 +131,42 @@ makebuffer samples = do
 
 
 -- |
-stopall :: Source -> IO ()
-stopall source = do
-  count <- get $ buffersQueued source
-  stop [source]
-  void $ unqueueBuffers source count
+-- TODO: Make 'keyboard' type (?)
+-- TODO: Rename (eg. createKeyboard)
+makebuffersFromIndeces :: [Int] -> IO [(Source, Buffer)]
+makebuffersFromIndeces indeces = do
+  pitches <- mapM (makebuffer . take (numSamples 5.0) . sine . Piano.pitchFromKeyIndex) indeces
+  sources <- genObjectNames (length indeces)
+
+  forM sources $ \source -> loopingMode source $= [OneShot, Looping] !! 1 -- Easy toggling
+
+  mapM_ (\(source, pitch) -> queueBuffers source [pitch]) $ zip sources pitches
+  return $ zip sources pitches
 
 
 -- |
-note :: Source -> Double -> Double -> IO ()
-note source frequency duration = do
-  audiobuffer <- makebuffer . take (numSamples duration) $ sine frequency
+playnote :: [(Source, Buffer)] -> Int -> IO ()
+playnote keyboard i = play [fst $ keyboard !! i]
 
-  queueBuffers source [audiobuffer]
-  play [source]
+
+-- |
+stopnote :: [(Source, Buffer)] -> Int -> IO ()
+stopnote keyboard i = stop [fst $ keyboard !! i]
+
+
+-- |
+-- stopall :: Source -> IO ()
+-- stopall source = do
+--   count <- get $ buffersQueued source
+--   stop [source]
+--   void $ unqueueBuffers source count
+
+
+-- |
+-- note :: Source -> Double -> Double -> IO ()
+-- note source frequency duration = do
+--   audiobuffer <- makebuffer . take (numSamples duration) $ sine frequency
+--
+--   queueBuffers source [audiobuffer]
+--   play [source]
   -- threadDelay (round duration * 10^6)
