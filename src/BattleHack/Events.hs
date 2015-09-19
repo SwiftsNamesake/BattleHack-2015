@@ -95,14 +95,10 @@ onmousemotion :: IORef AppState -> EventM EMotion Bool
 onmousemotion stateref = do
   mouse' <- liftM tovector eventCoordinates
   Cairo.liftIO $ do
-    modifyIORef stateref (setactive mouse')
+    appstate <- readIORef stateref
+    modifyIORef stateref (piano.active .~ Piano.findKeyAt mouse' (appstate-->piano))
     modifyIORef stateref (inputstate.mouse .~ mouse')
   return False
-  where
-    -- TODO: Simplify
-    -- TODO: Don't hard-code the range
-    -- TODO: This is a pretty dumb algorithm for finding hovered-over keys
-    setactive mouse' appstate = appstate & piano.active .~ find (Piano.insideFromKeyIndex (appstate-->piano) mouse') (zipWith const [0..] (appstate-->piano.keys))
 
 
 -- |
@@ -119,13 +115,11 @@ onmousedown stateref = do
 
 
 -- |
+-- TODO: Implement note press and release properly
 onmouseup :: IORef AppState -> EventM EButton Bool
 onmouseup stateref = do
-  -- TODO: Implement note press and release properly
-  -- source <- Cairo.liftIO $ liftM _source $ readIORef stateref
   Cairo.liftIO $ do
     appstate <- readIORef stateref
-    -- Cairo.liftIO $ Audio.stopall source
     perhaps pass (appstate-->piano.active) $ \i -> void $ Audio.stopnote (appstate-->claviature) i
   return False
 
@@ -134,8 +128,8 @@ onmouseup stateref = do
 onwheelscrool :: IORef AppState -> EventM EScroll Bool
 onwheelscrool stateref = do
   direction <- eventScrollDirection
-  Cairo.liftIO $ modifyIORef stateref (piano.origin %~ panX direction)
-  Cairo.liftIO $ print direction
+  Cairo.liftIO $ do
+    modifyIORef stateref (piano.origin %~ panX direction)
   return False
   where
     panX ScrollUp   = (+ ((-5.0):+0.0))
@@ -146,7 +140,7 @@ onwheelscrool stateref = do
 -- TODO: Helpers for updating state, checking repeats
 onkeydown :: IORef AppState -> EventM EKey Bool
 onkeydown stateref = do
-  key      <- eventKeyName -- TODO: Use key val?
+  key      <- liftM T.unpack eventKeyName -- TODO: Use key val?
   bindings <- Cairo.liftIO . liftM (-->bindings) . readIORef $ stateref
 
   Cairo.liftIO $ do
@@ -154,38 +148,27 @@ onkeydown stateref = do
     appstate <- readIORef stateref
 
     -- Unless the key is already being pressed
-    unless (S.member (T.unpack key) $ appstate-->inputstate.keyboard) $ do
-      modifyIORef stateref (inputstate.keyboard %~ S.insert (T.unpack key)) -- Mark key as pressed
-      print key
-      maybe pass id (M.lookup (T.unpack key) bindings) -- Invoke the command bound to this key (if any)
-      let mikey = noteIndexFromKey key
-      -- modifyIORef stateref (setactive key)
-      perhaps pass mikey $ \ikey -> modifyIORef stateref (piano.keys.ix ikey .~ True)
+    unless (S.member key $ appstate-->inputstate.keyboard) $ do
+      modifyIORef stateref (inputstate.keyboard %~ S.insert key) -- Mark key as pressed
+      maybe pass id (M.lookup key bindings)                     -- Invoke the command bound to this key (if any)
 
-      perhaps pass (noteIndexFromKey key) $ \iactive -> do
+      perhaps pass (noteIndexFromKey key) $ \i -> do
         appstate <- readIORef stateref
-        -- loopingMode (_source appstate) $= [OneShot, Looping] !! 1 -- Easy toggling
-        -- void . forkIO $ Audio.note (_source appstate) (Piano.pitchFromKeyIndex iactive) 1.0 -- TODO: Do not hard code duration
-        void $ Audio.playnote (appstate-->claviature) iactive
+        modifyIORef stateref (piano.keys.ix i .~ True)
+        void $ Audio.playnote (appstate-->claviature) i
 
   return False
-  -- where
-  --   setactive key = piano.active .~ noteIndexFromKey key
 
 
 -- |
+-- TODO: Implement note press and release properly
 onkeyup :: IORef AppState -> EventM EKey Bool
 onkeyup stateref = do
-  key <- eventKeyName -- TODO: Use key val?
-  -- TODO: Implement note press and release properly
-  -- source <- Cairo.liftIO $ liftM _source $ readIORef stateref
+  key <- liftM T.unpack eventKeyName -- TODO: Use key val?
   Cairo.liftIO $ do
-    modifyIORef stateref (inputstate.keyboard %~ S.delete (T.unpack key)) -- Mark key as pressed
-    let mikey = noteIndexFromKey key
     appstate <- readIORef stateref
-    -- Audio.stopall source
-    -- modifyIORef stateref (piano.active .~ Nothing)
-    perhaps pass mikey $ \i -> do
+    modifyIORef stateref (inputstate.keyboard %~ S.delete key) -- Mark key as pressed
+    perhaps pass (noteIndexFromKey key) $ \i -> do
       Audio.stopnote (appstate-->claviature) i
       modifyIORef stateref (piano.keys.ix i .~ False)
 
@@ -194,10 +177,9 @@ onkeyup stateref = do
 
 -- Utilities -------------------------------------------------------------------------------------------------------------------------------
 -- |
-noteIndexFromKey :: T.Text -> Maybe Int
-noteIndexFromKey k' = M.lookup k mapping -- TODO: Factor out
+noteIndexFromKey :: String -> Maybe Int
+noteIndexFromKey key = M.lookup (head $ key) mapping -- TODO: Factor out
   where
-    k = head $ T.unpack k'
     mapping = M.fromList $ zip "asdfghjklöä" Piano.allnaturals ++ zip "wetyupå"  Piano.allaccidentals
     -- keys = "asdfghjklöä" ++ "we tyu på" -- TODO: Move out key bindings (eg. to JSON file)
     -- range = map ((0*12)+) Piano.naturals      -- TODO: Range should be a setting

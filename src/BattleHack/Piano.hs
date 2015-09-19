@@ -34,23 +34,25 @@ module BattleHack.Piano where
 -- We'll need these
 --------------------------------------------------------------------------------------------------------------------------------------------
 import Control.Lens hiding (inside)
+import Data.List    (find)
 import Data.Complex
 
 import BattleHack.Types
 import BattleHack.Lenses
 import BattleHack.Utilities.Vector
+import BattleHack.Utilities.General
 
 
 
 --------------------------------------------------------------------------------------------------------------------------------------------
 -- Data
 --------------------------------------------------------------------------------------------------------------------------------------------
--- |
+-- | The indeces of the naturals (white keys) in the first octave
 naturals :: Integral n => [n]
 naturals = [0, 2, 4, 5, 7, 9, 11]
 
 
--- |
+-- | The indeces of the accidentals (black keys) in the first octave
 accidentals :: Integral n => [n]
 accidentals = [1, 3, 6, 8, 10]
 
@@ -117,11 +119,6 @@ insideMiddle piano (x:+y) = let (ox:+oy, dx:+dy) = keybounds piano KeyAccidental
 
 
 -- |
-between :: Ord n => n -> n -> n -> Bool
-between lower upper n = lower <= n && n <= upper
-
-
--- |
 -- TODO: Move to Piano
 -- TODO: Rename (?)
 layout :: RealFloat r => Complex r -> r -> r -> KeyLayout -> [Complex r]
@@ -159,10 +156,18 @@ keybounds piano layout = case layout of
     (indent':+mid') = dotwise (*) (piano-->keysize) (piano-->indent:+piano-->mid)
 
 
+-- |
+-- TODO: Simplify
+-- TODO: Don't hard-code the range
+-- TODO: This is a pretty dumb algorithm for finding hovered-over keys
+findKeyAt :: Vector -> PianoSettings -> Maybe Int
+findKeyAt p piano' = find (insideFromKeyIndex piano' p) (zipWith const [0..] (piano'-->keys))
+
+
 -- | Is the point inside the key at the given index?
 -- TODO: Rename (?)
 insideFromKeyIndex :: PianoSettings -> Vector -> Int -> Bool
-insideFromKeyIndex piano' p i = BattleHack.Piano.inside piano' (keylayout i) (p-keyorigin piano' i)
+insideFromKeyIndex piano' p i = inside piano' (keylayout i) (p-keyorigin piano' i)
 
 
 -- |
@@ -185,9 +190,9 @@ notenameFromKeyIndex i = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", 
 
 -- | The indeces of every natural key in order, starting at C0 (index 0)
 allnaturals :: [Int]
-allnaturals = zipWith (\i key -> div i 7 * 12 + key) [0..] naturals
+allnaturals = zipWith (\i key -> div i 7 * 12 + key) [0..] $ cycle naturals
 
 
 -- | The indeces of every accidental key in order, starting at C#0 (index 1)
 allaccidentals :: [Int]
-allaccidentals = zipWith (\i key -> div i 5 * 12 + key) [0..] accidentals
+allaccidentals = zipWith (\i key -> div i 5 * 12 + key) [0..] $ cycle accidentals

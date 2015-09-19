@@ -50,3 +50,8 @@ pass = return ()
 -- |
 perhaps :: b -> Maybe a -> (a -> b) -> b
 perhaps d mb f = maybe d f mb
+
+
+-- |
+between :: Ord n => n -> n -> n -> Bool
+between lower upper n = lower <= n && n <= upper

@@ -37,9 +37,9 @@ module BattleHack.Audio where
 import Data.Maybe                        --
 import Foreign hiding (void)             -- Import the foreigners!
 import Foreign.C.Types                   --
-import Control.Monad (liftM, void, forM) --
 import Control.Concurrent                --
 import Control.Applicative               --
+import Control.Monad (liftM, void, forM, forever) --
 
 import qualified Data.Vector.Storable         as V
 import qualified Data.Vector.Storable.Mutable as VM
@@ -86,6 +86,16 @@ device = do
 
 
 -- |
+setup :: IO (Maybe (Context, Device))
+setup = do
+  mdevice  <- device
+  mcontext <-  maybe (return Nothing) (flip createContext []) mdevice -- <$> mdevice
+
+  currentContext $= mcontext
+  return $ pure (,) <*> mcontext <*> mdevice
+
+
+-- |
 -- buffer :: Buffer
 -- buffer = _
 
@@ -104,16 +114,35 @@ sine freq = cycle . take n $ map sin [0, d..]
     n  = truncate (sr /freq)     --
     sr = fromIntegral sampleRate --
 
+
+-- |
+mix :: RealFloat r => [[r]] -> [r]
+mix = map sum
+
+-- Streaming -------------------------------------------------------------------------------------------------------------------------------
+
+-- |
+-- TODO: Streamer type (?)
+-- TODO: Pause, resumse, stop
+stream :: MVar [Bool] -> IO ()
+stream notes = forever $ do
+  playing <- liftM takeplaying $ readMVar notes
+  return ()
+  where
+    takeplaying = findIndices [0..]
+
 --------------------------------------------------------------------------------------------------------------------------------------------
 
 -- |
-setup :: IO (Maybe (Context, Device))
-setup = do
-  mdevice  <- device
-  mcontext <-  maybe (return Nothing) (flip createContext []) mdevice -- <$> mdevice
+playnote :: [(Source, Buffer)] -> Int -> IO ()
+playnote keyboard i = play [fst $ keyboard !! i]
 
-  currentContext $= mcontext
-  return $ pure (,) <*> mcontext <*> mdevice
+
+-- |
+stopnote :: [(Source, Buffer)] -> Int -> IO ()
+stopnote keyboard i = stop [fst $ keyboard !! i]
+
+--------------------------------------------------------------------------------------------------------------------------------------------
 
 
 -- |
@@ -142,16 +171,6 @@ makebuffersFromIndeces indeces = do
 
   mapM_ (\(source, pitch) -> queueBuffers source [pitch]) $ zip sources pitches
   return $ zip sources pitches
-
-
--- |
-playnote :: [(Source, Buffer)] -> Int -> IO ()
-playnote keyboard i = play [fst $ keyboard !! i]
-
-
--- |
-stopnote :: [(Source, Buffer)] -> Int -> IO ()
-stopnote keyboard i = stop [fst $ keyboard !! i]
 
 
 -- |

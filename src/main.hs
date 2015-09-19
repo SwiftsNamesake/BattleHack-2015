@@ -46,7 +46,6 @@ import           Graphics.UI.Gtk          as Gtk
 import           Graphics.UI.Gtk          (AttrOp(..), on)
 
 import Sound.OpenAL
--- import qualified Sound.ALUT   as Alut
 
 -- Internal module imports
 import           BattleHack.Types
