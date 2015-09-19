@@ -127,12 +127,18 @@ mix = map sum
 -- TODO: Streamer type (?)
 -- TODO: Pause, resumse, stop
 -- TODO: 'Double-buffering'
+-- TODO: In what order are buffers removed (?)
+-- TODO: What are OpenAL buffers specifiaclly, what happens when you write to a queued buffer (?)
+-- TODO: Do you have to align sine waves properly (ie. line up the periods) (?)
+-- TODO: Set looping mode
 stream :: Double -> Source -> MVar [Bool] -> IO ()
 stream dt source notes = do
-  -- [primero, segundo] <- genObjectNames 2 --
-  forever $ do
+  [primero, segundo] <- genObjectNames 2 --
+  forM (cycle [primero, segundo]) $ \buffer -> do
     playing <- liftM takeplaying $ readMVar notes
+    queueBuffers
     threadDelay . floor $ dt * 10^6
+  return ()
   where
     takeplaying = findIndices id
 
