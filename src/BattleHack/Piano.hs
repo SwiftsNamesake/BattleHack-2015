@@ -47,12 +47,12 @@ import BattleHack.Utilities.General
 --------------------------------------------------------------------------------------------------------------------------------------------
 -- Data
 --------------------------------------------------------------------------------------------------------------------------------------------
--- | The indeces of the naturals (white keys) in the first octave
+-- | The indices of the naturals (white keys) in the first octave
 naturals :: Integral n => [n]
 naturals = [0, 2, 4, 5, 7, 9, 11]
 
 
--- | The indeces of the accidentals (black keys) in the first octave
+-- | The indices of the accidentals (black keys) in the first octave
 accidentals :: Integral n => [n]
 accidentals = [1, 3, 6, 8, 10]
 
@@ -188,11 +188,11 @@ notenameFromKeyIndex :: Int -> String
 notenameFromKeyIndex i = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"] !! mod i 12
 
 
--- | The indeces of every natural key in order, starting at C0 (index 0)
+-- | The indices of every natural key in order, starting at C0 (index 0)
 allnaturals :: [Int]
 allnaturals = zipWith (\i key -> div i 7 * 12 + key) [0..] $ cycle naturals
 
 
--- | The indeces of every accidental key in order, starting at C#0 (index 1)
+-- | The indices of every accidental key in order, starting at C#0 (index 1)
 allaccidentals :: [Int]
 allaccidentals = zipWith (\i key -> div i 5 * 12 + key) [0..] $ cycle accidentals

@@ -40,6 +40,7 @@ import Foreign.C.Types                   --
 import Control.Concurrent                --
 import Control.Applicative               --
 import Control.Monad (liftM, void, forM, forever) --
+import Data.List     (findIndices)
 
 import qualified Data.Vector.Storable         as V
 import qualified Data.Vector.Storable.Mutable as VM
@@ -121,15 +122,19 @@ mix = map sum
 
 -- Streaming -------------------------------------------------------------------------------------------------------------------------------
 
+
 -- |
 -- TODO: Streamer type (?)
 -- TODO: Pause, resumse, stop
-stream :: MVar [Bool] -> IO ()
-stream notes = forever $ do
-  playing <- liftM takeplaying $ readMVar notes
-  return ()
+-- TODO: 'Double-buffering'
+stream :: Double -> Source -> MVar [Bool] -> IO ()
+stream dt source notes = do
+  -- [primero, segundo] <- genObjectNames 2 --
+  forever $ do
+    playing <- liftM takeplaying $ readMVar notes
+    threadDelay . floor $ dt * 10^6
   where
-    takeplaying = findIndices [0..]
+    takeplaying = findIndices id
 
 --------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -162,10 +167,10 @@ makebuffer samples = do
 -- |
 -- TODO: Make 'keyboard' type (?)
 -- TODO: Rename (eg. createKeyboard)
-makebuffersFromIndeces :: [Int] -> IO [(Source, Buffer)]
-makebuffersFromIndeces indeces = do
-  pitches <- mapM (makebuffer . take (numSamples 5.0) . sine . Piano.pitchFromKeyIndex) indeces
-  sources <- genObjectNames (length indeces)
+makebuffersFromIndices :: [Int] -> IO [(Source, Buffer)]
+makebuffersFromIndices indices = do
+  pitches <- mapM (makebuffer . take (numSamples 5.0) . sine . Piano.pitchFromKeyIndex) indices
+  sources <- genObjectNames (length indices)
 
   forM sources $ \source -> loopingMode source $= [OneShot, Looping] !! 1 -- Easy toggling
 
