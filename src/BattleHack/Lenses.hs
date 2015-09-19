@@ -65,6 +65,19 @@ inputstate :: Lens AppState AppState InputState InputState
 inputstate f s = (\new -> s { _inputstate=new }) <$> f (_inputstate s)
 
 
+animation :: Lens AppState AppState AnimationData AnimationData
+animation f s = (\new -> s { _animation=new }) <$> f (_animation s)
+
+
+-- AnimationData ---------------------------------------------------------------------------------------------------------------------------
+frame :: Lens AnimationData AnimationData Int Int
+frame f s = (\new -> s { _frame=new }) <$> f (_frame s)
+
+
+fps :: Lens AnimationData AnimationData Int Int
+fps f s = (\new -> s { _fps=new }) <$> f (_fps s)
+
+
 -- InputState ------------------------------------------------------------------------------------------------------------------------------
 -- |
 mouse :: Lens InputState InputState Vector Vector

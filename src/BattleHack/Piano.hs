@@ -33,7 +33,7 @@ module BattleHack.Piano where
 --------------------------------------------------------------------------------------------------------------------------------------------
 -- We'll need these
 --------------------------------------------------------------------------------------------------------------------------------------------
-import Control.Lens
+import Control.Lens hiding (inside)
 import Data.Complex
 
 import BattleHack.Types
@@ -90,7 +90,7 @@ inside :: PianoSettings -> KeyLayout -> Vector -> Bool
 inside piano KeyLeft       p = insideBounds piano p && not (insideLeft piano p)
 inside piano KeyRight      p = insideBounds piano p && not (insideRight piano p)
 inside piano KeyBoth       p = insideBounds piano p && not (insideLeft piano p || insideRight piano p)
-inside piano KeyAccidental p = insideLeft   piano p || insideRight piano p
+inside piano KeyAccidental p = insideMiddle piano p --  --insideLeft   piano p || insideRight piano p
 
 
 -- | Is the point within the rectangular bounding box of the key?
@@ -109,6 +109,11 @@ insideRight :: PianoSettings -> Vector -> Bool
 insideRight piano p = let shiftx = piano-->keysize.real * (piano-->indent - 1) in insideLeft piano $ p + (shiftx:+0)
 -- insideRight piano p = let shiftx = piano-->keysize.real * (1 - piano-->indent) in insideLeft piano $ p - (piano-->keysize.real:+0) + ((piano-->keysize.real*piano-->indent):+0)
 -- insideRight piano (x:+y) = between ()
+
+
+-- |
+insideMiddle :: PianoSettings -> Vector -> Bool
+insideMiddle piano (x:+y) = let (ox:+oy, dx:+dy) = keybounds piano KeyAccidental in between ox (ox+dx) x && between oy (oy+dy) y
 
 
 -- |
@@ -146,12 +151,18 @@ layout (sx:+sy) indent mid which = case which of
 
 -- | Rectangular bounds of a key (currently as a topleft, size tuple)
 -- TODO: Use Bounding Box type (?)
-keybounds :: PianoSettings -> Int -> (Vector, Vector)
-keybounds piano i = case keylayout i of
+keybounds :: PianoSettings -> KeyLayout -> (Vector, Vector)
+keybounds piano layout = case layout of
   KeyAccidental -> (piano-->keysize.real' - (indent':+0), (2*indent'):+mid')
   _             -> (0:+0, piano-->keysize)
   where
     (indent':+mid') = dotwise (*) (piano-->keysize) (piano-->indent:+piano-->mid)
+
+
+-- | Is the point inside the key at the given index?
+-- TODO: Rename (?)
+insideFromKeyIndex :: PianoSettings -> Vector -> Int -> Bool
+insideFromKeyIndex piano' p i = BattleHack.Piano.inside piano' (keylayout i) (p-keyorigin piano' i)
 
 
 -- |

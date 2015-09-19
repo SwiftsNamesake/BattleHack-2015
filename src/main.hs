@@ -98,6 +98,9 @@ initalstate nkeys origin' keysize' source = AppState { _piano = PianoSettings { 
                                                                                 _active  = Nothing,
                                                                                 _keys    = replicate nkeys False },
 
+                                                       _animation = AnimationData { _frame = 0,
+                                                                                    _fps   = 30 },
+
                                                        _inputstate = InputState { _mouse=0:+0, _keyboard=S.empty },
                                                        _source     = source,
                                                        _bindings = M.fromList [("Escape", Cairo.liftIO mainQuit)] }

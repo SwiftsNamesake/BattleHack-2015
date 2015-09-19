@@ -43,7 +43,7 @@ import qualified Data.Map  as M
 import qualified Data.Set  as S
 
 import Control.Lens
-import Control.Monad (liftM, forM, void, when, unless)
+import Control.Monad (liftM, forM, void, when, unless, liftM)
 import Control.Applicative
 import Control.Concurrent
 
@@ -69,14 +69,17 @@ import qualified BattleHack.Render as Render
 onanimate :: DrawingArea -> IORef AppState -> IO Bool
 onanimate canvas stateref = do
   widgetQueueDraw canvas
+  modifyIORef stateref (animation.frame %~ (+1)) -- Increment frame count
   return True
 
 
 -- |
 ondraw :: IORef AppState -> Cairo.Render ()
 ondraw stateref = do
-  state <- Cairo.liftIO $ readIORef stateref
-  Render.claviature $ state-->piano
+  appstate <- Cairo.liftIO $ readIORef stateref
+  Render.claviature $ appstate-->piano --
+  Render.debugHUD   $ appstate         --
+  -- Render.sinewave   $ appstate         -- Just for shits and giggles
 
 
 -- |
@@ -91,8 +94,9 @@ ondelete stateref = do
 onmousemotion :: IORef AppState -> EventM EMotion Bool
 onmousemotion stateref = do
   mouse' <- liftM tovector eventCoordinates
-  Cairo.liftIO $ modifyIORef stateref (setactive mouse')
-  Cairo.liftIO $ modifyIORef stateref (inputstate.mouse .~ mouse')
+  Cairo.liftIO $ do
+    modifyIORef stateref (setactive mouse')
+    modifyIORef stateref (inputstate.mouse .~ mouse')
   return False
   where
     -- TODO: Simplify

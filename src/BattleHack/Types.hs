@@ -64,8 +64,15 @@ data KeyLayout = KeyLeft | KeyRight | KeyBoth | KeyAccidental deriving (Show)
 
 
 -- |
+-- frame number, fps, etc.
+data AnimationData = AnimationData { _frame :: Int,
+                                     _fps   :: Int }
+
+
+-- |
 data AppState = AppState { _piano      :: PianoSettings,
                            _source     :: Source,
+                           _animation  :: AnimationData,
                            _bindings   :: KeyMap,
                            _inputstate :: InputState } -- deriving (Show)
 

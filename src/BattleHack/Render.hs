@@ -28,6 +28,7 @@ module BattleHack.Render where
 import Control.Monad (forM_, liftM, when)
 import Control.Lens
 import Data.Complex
+import Data.Fixed (mod')
 import qualified Data.Set as S
 
 import qualified Graphics.Rendering.Cairo as Cairo
@@ -35,6 +36,7 @@ import qualified Graphics.Rendering.Cairo as Cairo
 import BattleHack.Types
 import BattleHack.Lenses
 import BattleHack.Utilities.Vector
+import BattleHack.Utilities.General
 import qualified BattleHack.Piano as Piano
 
 
@@ -48,12 +50,6 @@ import qualified BattleHack.Piano as Piano
 --------------------------------------------------------------------------------------------------------------------------------------------
 -- Functions
 --------------------------------------------------------------------------------------------------------------------------------------------
--- Vector utilities ------------------------------------------------------------------------------------------------------------------------
--- |
-vectorise :: RealFloat f => (f -> f -> a) -> Complex f -> a
-vectorise f (x:+y) = f x y
-
-
 -- General rendering functions -------------------------------------------------------------------------------------------------------------
 -- |
 polygon :: [Complex Double] -> Cairo.Render ()
@@ -84,10 +80,11 @@ key piano i = do
 keylabel :: PianoSettings -> Int -> Cairo.Render ()
 keylabel piano i = do
   -- vectorise Cairo.moveTo (Piano.keyorigin piano i + 0.9*(0:+piano-->keysize-->imag)) -- $ (piano-->origin) + dotwise (*) (piano-->keysize) (0.5:+0.8) -- ((piano-->keysize.real)/2:+(piano-->keysize.imag * 0.8))
-  let (o, sz) = Piano.keybounds piano i
+  let (o, sz) = Piano.keybounds piano (Piano.keylayout i)
   -- vectorise Cairo.moveTo (Piano.keyorigin piano i + o + dotwise (*) sz (0.5:+0.95))
   -- vectorise Cairo.moveTo (20:+20)
   Cairo.setFontSize (if (i `mod` 12) `elem` Piano.naturals then 48 else 22)
+  Cairo.selectFontFace "Old English" Cairo.FontSlantNormal Cairo.FontWeightNormal
   Cairo.setSourceRGBA 0.20 0.12 0.08 1.00
   centredText (Piano.keyorigin piano i + o + dotwise (*) sz (0.5:+0.90)) (Piano.notenameFromKeyIndex i)
 
@@ -99,6 +96,45 @@ claviature settings = do
     key settings ikey
 
 
+--------------------------------------------------------------------------------------------------------------------------------------------
+-- |
+sinewave :: AppState -> Cairo.Render ()
+sinewave appstate = do
+  vectorise Cairo.moveTo o
+  forM_ [o + (θ:+(48*sin (fromIntegral n/ fromIntegral fps')*sin (θ*0.04))) | θ <- [0,5..600]] (vectorise Cairo.lineTo)
+  Cairo.setLineWidth 12
+  Cairo.setSourceRGBA 0.62 0.94 0.44 1.0
+  Cairo.stroke
+  where
+    o    = 6.32 * 50:+50
+    n    = appstate-->animation.frame
+    fps' = appstate-->animation.fps
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+-- |
+debugHUD :: AppState -> Cairo.Render ()
+debugHUD appstate = do
+  Cairo.setFontSize 14
+  Cairo.selectFontFace "Helvetica" Cairo.FontSlantNormal Cairo.FontWeightNormal
+  Cairo.setSourceRGBA 0.05 0.59 0.62 1.00
+
+  let keywidth = appstate-->piano.keysize.real
+  when (Piano.insideLeft (appstate-->piano) $ (mouse' & real %~ flip mod' keywidth)) $ do
+    centredText (100:+30) "Inside left"
+
+  when (Piano.insideRight (appstate-->piano) $ (mouse' & real %~ flip mod' keywidth)) $ do
+    centredText (100:+45) "Inside right"
+
+  maybe pass (\i -> centredText (100:+60) $ Piano.notenameFromKeyIndex i) (appstate-->piano.active)
+  -- when (Piano.insideLeft (appstate-->piano) $ (mouse' & real %~ flip mod' keywidth)) $ do
+    -- centredText (appstate-->piano.origin + (100:+30)) "Inside left"
+
+  where
+    mouse' = appstate-->inputstate.mouse
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------
 -- | Borrowed from Southpaw
 -- TODO: General anchor (?)
 centredText :: Complex Double -> String -> Cairo.Render ()

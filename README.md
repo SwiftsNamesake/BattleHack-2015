@@ -19,3 +19,6 @@ TODO
 * Bundle external dependencies (eg. OpenAL)
 * Proper docs (dev as well as user)
 * Integrate QuickCheck
+
+* Menu
+* Intro animation, keys falling into place, outlines being drawn
