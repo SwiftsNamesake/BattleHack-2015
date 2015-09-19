@@ -84,8 +84,8 @@ keylabel piano i = do
   -- vectorise Cairo.moveTo (Piano.keyorigin piano i + o + dotwise (*) sz (0.5:+0.95))
   -- vectorise Cairo.moveTo (20:+20)
   Cairo.setFontSize (if (i `mod` 12) `elem` Piano.naturals then 48 else 22)
-  Cairo.selectFontFace "Tahoma" Cairo.FontSlantNormal Cairo.FontWeightNormal
-  Cairo.setSourceRGBA 0.97 0.31 0.00 1.00
+  Cairo.selectFontFace "Old English" Cairo.FontSlantNormal Cairo.FontWeightNormal
+  Cairo.setSourceRGBA 0.20 0.12 0.08 1.00
   centredText (Piano.keyorigin piano i + o + dotwise (*) sz (0.5:+0.90)) (Piano.notenameFromKeyIndex i)
 
 

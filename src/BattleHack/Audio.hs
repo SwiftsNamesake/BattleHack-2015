@@ -35,12 +35,12 @@ module BattleHack.Audio where
 -- We'll need these
 --------------------------------------------------------------------------------------------------------------------------------------------
 import Data.Maybe                        --
+import Data.List  (findIndices)          --
 import Foreign hiding (void)             -- Import the foreigners!
 import Foreign.C.Types                   --
+import Control.Monad (liftM, void, forM) --
 import Control.Concurrent                --
 import Control.Applicative               --
-import Control.Monad (liftM, void, forM, forever) --
-import Data.List     (findIndices)
 
 import qualified Data.Vector.Storable         as V
 import qualified Data.Vector.Storable.Mutable as VM
@@ -74,8 +74,8 @@ sampleRate = 44100
 
 -- |
 numSamples :: Integral n => Double -> n --NumSamples
-numSamples secs = round (fromIntegral sampleRate * secs)
--- numSamples = round . (fromIntegral sampleRate *)
+numSamples = round . (fromIntegral sampleRate *)
+-- numSamples secs = round (fromIntegral sampleRate * secs)
 
 --------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -94,11 +94,6 @@ setup = do
 
   currentContext $= mcontext
   return $ pure (,) <*> mcontext <*> mdevice
-
-
--- |
--- buffer :: Buffer
--- buffer = _
 
 
 -- |
@@ -122,12 +117,12 @@ mix = map sum
 
 -- Streaming -------------------------------------------------------------------------------------------------------------------------------
 
-
 -- |
 -- TODO: Streamer type (?)
 -- TODO: Pause, resumse, stop
 -- TODO: 'Double-buffering'
--- TODO: In what order are buffers removed (?)
+-- TODO: In what order are buffers removed and queued (?)
+-- TODO: What happens when the same buffer is queued multiple times
 -- TODO: What are OpenAL buffers specifiaclly, what happens when you write to a queued buffer (?)
 -- TODO: Do you have to align sine waves properly (ie. line up the periods) (?)
 -- TODO: Set looping mode
@@ -136,13 +131,14 @@ stream dt source notes = do
   [primero, segundo] <- genObjectNames 2 --
   forM (cycle [primero, segundo]) $ \buffer -> do
     playing <- liftM takeplaying $ readMVar notes
-    queueBuffers
+    queueBuffers source [buffer]
     threadDelay . floor $ dt * 10^6
   return ()
   where
     takeplaying = findIndices id
 
---------------------------------------------------------------------------------------------------------------------------------------------
+
+-- Control ---------------------------------------------------------------------------------------------------------------------------------
 
 -- |
 playnote :: [(Source, Buffer)] -> Int -> IO ()
@@ -153,8 +149,8 @@ playnote keyboard i = play [fst $ keyboard !! i]
 stopnote :: [(Source, Buffer)] -> Int -> IO ()
 stopnote keyboard i = stop [fst $ keyboard !! i]
 
---------------------------------------------------------------------------------------------------------------------------------------------
 
+-- Buffers ---------------------------------------------------------------------------------------------------------------------------------
 
 -- |
 -- TODO: Simplify
@@ -173,10 +169,10 @@ makebuffer samples = do
 -- |
 -- TODO: Make 'keyboard' type (?)
 -- TODO: Rename (eg. createKeyboard)
-makebuffersFromIndices :: [Int] -> IO [(Source, Buffer)]
-makebuffersFromIndices indices = do
-  pitches <- mapM (makebuffer . take (numSamples 5.0) . sine . Piano.pitchFromKeyIndex) indices
-  sources <- genObjectNames (length indices)
+makebuffersFromIndeces :: [Int] -> IO [(Source, Buffer)]
+makebuffersFromIndeces indeces = do
+  pitches <- mapM (makebuffer . take (numSamples 5.0) . sine . Piano.pitchFromKeyIndex) indeces
+  sources <- genObjectNames (length indeces)
 
   forM sources $ \source -> loopingMode source $= [OneShot, Looping] !! 1 -- Easy toggling
 
