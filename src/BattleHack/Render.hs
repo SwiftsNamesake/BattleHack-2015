@@ -27,6 +27,7 @@ module BattleHack.Render where
 --------------------------------------------------------------------------------------------------------------------------------------------
 import Control.Monad (forM_, liftM, when)
 import Control.Lens
+import Control.Applicative
 import Data.Complex
 import Data.Fixed (mod')
 import qualified Data.Set as S
@@ -135,14 +136,44 @@ debugHUD appstate = do
 
 
 --------------------------------------------------------------------------------------------------------------------------------------------
+
+-- |
+textsize :: String -> Cairo.Render Vector
+textsize text = do
+  extents <- Cairo.textExtents text
+  return $ Cairo.textExtentsWidth extents :+ Cairo.textExtentsHeight extents
+
+
 -- | Borrowed from Southpaw
 -- TODO: General anchor (?)
-centredText :: Complex Double -> String -> Cairo.Render ()
-centredText (cx:+cy) text = do
-	extents <- Cairo.textExtents text
-	let (w, h) = (Cairo.textExtentsWidth extents, Cairo.textExtentsHeight extents)
-	Cairo.moveTo (cx-w/2) (cy+h/2)
-	Cairo.showText text
+centredText :: Vector -> String -> Cairo.Render ()
+centredText centre text = do
+  size <- textsize text
+  vectorise Cairo.moveTo $ centre - 0.5*size
+  Cairo.showText text
 
+
+-- Menu ------------------------------------------------------------------------------------------------------------------------------------
+
+-- |
+overlay :: Cairo.Render ()
+overlay = do
+  -- TODO: Writing animation
+  -- Cairo.setOperator Cairo.OperatorDestIn
+  Cairo.setFontSize 180
+  Cairo.selectFontFace ("Verdana" :: String) Cairo.FontSlantNormal Cairo.FontWeightBold
+  Cairo.setSourceRGBA 1.0 1.0 1.0 0.8
+  -- centredText ((winx:+winy) * 0.5) "CHORDIAL"
+  Cairo.setLineWidth 12
+  size <- textsize "CUERDA"
+  vectorise Cairo.moveTo $ (winsize - size) * 0.5
+  Cairo.textPath "CUERDA"
+  Cairo.clip
+  -- Cairo.stroke
+
+  where
+    origin'@(ox:+oy)  = 20:+20                 --
+    keysize'@(sx:+sy) = (4:+13) * 40           --
+    winsize           = ((sx*7:+sy) + 2*origin') --
 
 -- Menu ------------------------------------------------------------------------------------------------------------------------------------

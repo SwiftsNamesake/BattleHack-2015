@@ -77,6 +77,7 @@ onanimate canvas stateref = do
 ondraw :: IORef AppState -> Cairo.Render ()
 ondraw stateref = do
   appstate <- Cairo.liftIO $ readIORef stateref
+  Render.overlay
   Render.claviature $ appstate-->piano --
   Render.debugHUD   $ appstate         --
   -- Render.sinewave   $ appstate         -- Just for shits and giggles
@@ -95,8 +96,7 @@ onmousemotion :: IORef AppState -> EventM EMotion Bool
 onmousemotion stateref = do
   mouse' <- liftM tovector eventCoordinates
   Cairo.liftIO $ do
-    appstate <- readIORef stateref
-    modifyIORef stateref (piano.active .~ Piano.findKeyAt mouse' (appstate-->piano))
+    modifyIORef stateref (setactive mouse')
     modifyIORef stateref (inputstate.mouse .~ mouse')
   return False
 
@@ -115,11 +115,13 @@ onmousedown stateref = do
 
 
 -- |
--- TODO: Implement note press and release properly
 onmouseup :: IORef AppState -> EventM EButton Bool
 onmouseup stateref = do
+  -- TODO: Implement note press and release properly
+  -- source <- Cairo.liftIO $ liftM _source $ readIORef stateref
   Cairo.liftIO $ do
     appstate <- readIORef stateref
+    -- Cairo.liftIO $ Audio.stopall source
     perhaps pass (appstate-->piano.active) $ \i -> void $ Audio.stopnote (appstate-->claviature) i
   return False
 
@@ -148,27 +150,38 @@ onkeydown stateref = do
     appstate <- readIORef stateref
 
     -- Unless the key is already being pressed
-    unless (S.member key $ appstate-->inputstate.keyboard) $ do
-      modifyIORef stateref (inputstate.keyboard %~ S.insert key) -- Mark key as pressed
-      maybe pass id (M.lookup key bindings)                     -- Invoke the command bound to this key (if any)
+    unless (S.member (T.unpack key) $ appstate-->inputstate.keyboard) $ do
+      modifyIORef stateref (inputstate.keyboard %~ S.insert (T.unpack key)) -- Mark key as pressed
+      print key
+      maybe pass id (M.lookup (T.unpack key) bindings) -- Invoke the command bound to this key (if any)
+      let mikey = noteIndexFromKey key
+      -- modifyIORef stateref (setactive key)
+      perhaps pass mikey $ \ikey -> modifyIORef stateref (piano.keys.ix ikey .~ True)
 
-      perhaps pass (noteIndexFromKey key) $ \i -> do
+      perhaps pass (noteIndexFromKey key) $ \iactive -> do
         appstate <- readIORef stateref
-        modifyIORef stateref (piano.keys.ix i .~ True)
-        void $ Audio.playnote (appstate-->claviature) i
+        -- loopingMode (_source appstate) $= [OneShot, Looping] !! 1 -- Easy toggling
+        -- void . forkIO $ Audio.note (_source appstate) (Piano.pitchFromKeyIndex iactive) 1.0 -- TODO: Do not hard code duration
+        void $ Audio.playnote (appstate-->claviature) iactive
 
   return False
+  -- where
+  --   setactive key = piano.active .~ noteIndexFromKey key
 
 
 -- |
--- TODO: Implement note press and release properly
 onkeyup :: IORef AppState -> EventM EKey Bool
 onkeyup stateref = do
-  key <- liftM T.unpack eventKeyName -- TODO: Use key val?
+  key <- eventKeyName -- TODO: Use key val?
+  -- TODO: Implement note press and release properly
+  -- source <- Cairo.liftIO $ liftM _source $ readIORef stateref
   Cairo.liftIO $ do
+    modifyIORef stateref (inputstate.keyboard %~ S.delete (T.unpack key)) -- Mark key as pressed
+    let mikey = noteIndexFromKey key
     appstate <- readIORef stateref
-    modifyIORef stateref (inputstate.keyboard %~ S.delete key) -- Mark key as pressed
-    perhaps pass (noteIndexFromKey key) $ \i -> do
+    -- Audio.stopall source
+    -- modifyIORef stateref (piano.active .~ Nothing)
+    perhaps pass mikey $ \i -> do
       Audio.stopnote (appstate-->claviature) i
       modifyIORef stateref (piano.keys.ix i .~ False)
 
@@ -177,9 +190,8 @@ onkeyup stateref = do
 
 -- Utilities -------------------------------------------------------------------------------------------------------------------------------
 -- |
-noteIndexFromKey :: String -> Maybe Int
-noteIndexFromKey key = M.lookup (head $ key) mapping -- TODO: Factor out
-  where
++noteIndexFromKey :: String -> Maybe Int
++noteIndexFromKey key = M.lookup (head $ key) mapping -- TODO: Factor out  where
     mapping = M.fromList $ zip "asdfghjklöä" Piano.allnaturals ++ zip "wetyupå"  Piano.allaccidentals
     -- keys = "asdfghjklöä" ++ "we tyu på" -- TODO: Move out key bindings (eg. to JSON file)
     -- range = map ((0*12)+) Piano.naturals      -- TODO: Range should be a setting

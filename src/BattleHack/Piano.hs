@@ -47,14 +47,24 @@ import BattleHack.Utilities.General
 --------------------------------------------------------------------------------------------------------------------------------------------
 -- Data
 --------------------------------------------------------------------------------------------------------------------------------------------
--- | The indices of the naturals (white keys) in the first octave
+-- |
 naturals :: Integral n => [n]
 naturals = [0, 2, 4, 5, 7, 9, 11]
 
 
--- | The indices of the accidentals (black keys) in the first octave
+-- |
 accidentals :: Integral n => [n]
 accidentals = [1, 3, 6, 8, 10]
+
+
+-- | The indeces of every natural key in order, starting at C0 (index 0)
+allnaturals :: [Int]
+allnaturals = zipWith (\i key -> div i 7 * 12 + key) [0..] $ cycle naturals
+
+
+-- | The indeces of every accidental key in order, starting at C#0 (index 1)
+allaccidentals :: [Int]
+allaccidentals = zipWith (\i key -> div i 5 * 12 + key) [0..] $ cycle accidentals
 
 
 -- |
@@ -169,7 +179,6 @@ findKeyAt p piano' = find (insideFromKeyIndex piano' p) (zipWith const [0..] (pi
 insideFromKeyIndex :: PianoSettings -> Vector -> Int -> Bool
 insideFromKeyIndex piano' p i = inside piano' (keylayout i) (p-keyorigin piano' i)
 
-
 -- |
 pitchFromKeyIndex :: RealFloat r => Int -> r
 pitchFromKeyIndex i = let i' = i+4+49 in 440.0*2.0**((fromIntegral i' - 49)/12.0) -- TODO: Make sure this is correct, elaborate on the meaning of the different index conversions
@@ -186,13 +195,3 @@ octaveFromKeyIndex = fromIntegral . (`div` 12)
 -- TODO: Use Unicode (?)
 notenameFromKeyIndex :: Int -> String
 notenameFromKeyIndex i = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"] !! mod i 12
-
-
--- | The indices of every natural key in order, starting at C0 (index 0)
-allnaturals :: [Int]
-allnaturals = zipWith (\i key -> div i 7 * 12 + key) [0..] $ cycle naturals
-
-
--- | The indices of every accidental key in order, starting at C#0 (index 1)
-allaccidentals :: [Int]
-allaccidentals = zipWith (\i key -> div i 5 * 12 + key) [0..] $ cycle accidentals

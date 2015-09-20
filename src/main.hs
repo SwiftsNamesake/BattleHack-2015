@@ -46,6 +46,7 @@ import           Graphics.UI.Gtk          as Gtk
 import           Graphics.UI.Gtk          (AttrOp(..), on)
 
 import Sound.OpenAL
+-- import qualified Sound.ALUT   as Alut
 
 -- Internal module imports
 import           BattleHack.Types
@@ -84,10 +85,10 @@ main = do
   -- Enter main loop
   mainGUI
   where
-    fps = 30
-    origin'@(ox:+oy)  = 20:+20
-    keysize'@(sx:+sy) = (4:+13) * 40
-    winsize           = (sx*7:+sy) + 2*origin'
+    fps = 30                                   --
+    origin'@(ox:+oy)  = 20:+20                 --
+    keysize'@(sx:+sy) = (4:+13) * 40           --
+    winsize           = (sx*7:+sy) + 2*origin' --
 
 
 -- | Initial application state

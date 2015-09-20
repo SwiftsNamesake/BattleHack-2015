@@ -63,8 +63,3 @@ toscalar f (x:+y) = f x y
 --  | Converts a 2-tuple to a vector
 tovector :: (a, a) -> Complex a
 tovector =  uncurry (:+)
-
-
--- |
-vectorise :: RealFloat f => (f -> f -> a) -> Complex f -> a
-vectorise f (x:+y) = f x y
