@@ -114,7 +114,8 @@ onmousedown stateref = do
     perhaps pass (appstate-->piano.active) $ \i -> do
       -- loopingMode (_source appstate) $= [OneShot, Looping] !! 1 -- Easy toggling
       -- void . forkIO $ Audio.note (_source appstate) (Piano.pitchFromKeyIndex ikey) 1.0 -- TODO: Do not hard code duration
-      void $ Audio.playnote (appstate-->claviature) i
+      -- void $ Audio.playnote (appstate-->claviature) i
+      modifyIORef stateref (piano.keys.ix i .~ True)
   return False
 
 
@@ -125,7 +126,9 @@ onmouseup stateref = do
   -- source <- Cairo.liftIO $ liftM _source $ readIORef stateref
   Cairo.liftIO $ do
     appstate <- readIORef stateref
-    perhaps pass (appstate-->piano.active) $ \i -> void $ Audio.stopnote (appstate-->claviature) i
+    perhaps pass (appstate-->piano.active) $ \i -> do
+      modifyIORef stateref (piano.keys.ix i .~ False)
+      -- return expressionvoid $ Audio.stopnote (appstate-->claviature) i
   return False
 
 
@@ -160,7 +163,7 @@ onkeydown stateref = do
       perhaps pass (noteIndexFromKey key) $ \i -> do
         appstate <- readIORef stateref
         modifyIORef stateref (piano.keys.ix i .~ True)
-        void $ Audio.playnote (appstate-->claviature) i
+        -- void $ Audio.playnote (appstate-->claviature) i
 
   return False
 
@@ -174,7 +177,7 @@ onkeyup stateref = do
     appstate <- readIORef stateref
     modifyIORef stateref (inputstate.keyboard %~ S.delete key) -- Mark key as pressed
     perhaps pass (noteIndexFromKey key) $ \i -> do
-      Audio.stopnote (appstate-->claviature) i
+      -- Audio.stopnote (appstate-->claviature) i
       modifyIORef stateref (piano.keys.ix i .~ False)
 
   return False
