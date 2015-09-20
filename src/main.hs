@@ -35,12 +35,14 @@ module Main where
 --------------------------------------------------------------------------------------------------------------------------------------------
 -- We'll need these
 --------------------------------------------------------------------------------------------------------------------------------------------
-import Control.Monad      (forM_, when)
+import Control.Monad      (forM_, when, forever)
 import Control.Concurrent (threadDelay, forkIO)
+import Control.Concurrent.MVar
 import Text.Printf
 import Data.IORef
 import Data.Complex
 import Data.StateVar
+import Data.Functor
 import qualified Data.Set  as S
 import qualified Data.Map  as M
 
@@ -53,6 +55,7 @@ import Sound.OpenAL
 
 -- Internal module imports
 import           BattleHack.Types
+import           BattleHack.Lenses
 import qualified BattleHack.Render  as Render
 import qualified BattleHack.Events  as Events
 import qualified BattleHack.Audio   as Audio
@@ -73,11 +76,20 @@ main = do
   -- TODO: Utility function for accessing range indeces
   -- TODO: Don't hard-code range
   Just (context, device) <- Audio.setup -- TODO: Return context as well (probably a good idea) (✓)
-  claviature'            <- Audio.makebuffersFromIndeces (zipWith const [0..] $ replicate 24 False)
-  -- [source]    <- genObjectNames 1
+  [source] <- genObjectNames 1
+  -- claviature'            <- Audio.makebuffersFromIndeces (zipWith const [0..] $ replicate 24 False)
 
   -- App state
-  stateref <- newIORef (initalstate 24 origin' keysize' claviature')
+  stateref <- newIORef (initalstate 24 origin' keysize') -- claviature')
+
+  --
+  mnotes <- newMVar . (-->piano.keys) <$> readIORef stateref
+
+  forkIO $ Audio.stream (1.0/30.0) source mnotes
+
+  forkIO $ forever $ do
+    putMVar mnotes . (-->piano.keys) <$> readIORef stateref
+    threadDelay $ (1.0/30.0) * 10^6
 
   -- Register event handlers
   Window.bindevents window canvas stateref
@@ -96,20 +108,19 @@ main = do
 
 -- | Initial application state
 -- TODO: Piano range
-initalstate :: Int -> Vector -> Vector -> Claviature -> AppState
-initalstate nkeys origin' keysize' claviature' = AppState { _piano = PianoSettings { _origin  = origin',
-                                                                                _keysize = keysize',
-                                                                                _indent  = 0.26,
-                                                                                _mid     = 0.62,
-                                                                                _active  = Nothing,
-                                                                                _keys    = replicate nkeys False },
+initalstate :: Int -> Vector -> Vector -> AppState
+initalstate nkeys origin' keysize' = AppState { _piano = PianoSettings { _origin  = origin',
+                                                                         _keysize = keysize',
+                                                                         _indent  = 0.26,
+                                                                         _mid     = 0.62,
+                                                                         _active  = Nothing,
+                                                                         _keys    = replicate nkeys False },
 
-                                                       _animation = AnimationData { _frame = 0,
-                                                                                    _fps   = 30 },
+                                                _animation = AnimationData { _frame = 0,
+                                                                             _fps   = 30 },
 
-                                                       _claviature = claviature',
-                                                       _inputstate = InputState { _mouse=0:+0, _keyboard=S.empty },
-                                                       _bindings = M.fromList [("Escape", Cairo.liftIO mainQuit)] }
+                                                _inputstate = InputState { _mouse=0:+0, _keyboard=S.empty },
+                                                _bindings = M.fromList [("Escape", Cairo.liftIO mainQuit)] }
 
 
 -- | Just a little hello world snippet to make sure everything is set up properly.

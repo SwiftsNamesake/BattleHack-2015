@@ -76,7 +76,7 @@ data AnimationData = AnimationData { _frame :: Int,
 -- |
 -- TODO: Slightly less confusing names (piano vs claviature)
 data AppState = AppState { _piano      :: PianoSettings,
-                           _claviature :: Claviature,
+                          --  _claviature :: Claviature,
                           --  _source     :: Source,
                            _animation  :: AnimationData,
                            _bindings   :: KeyMap,

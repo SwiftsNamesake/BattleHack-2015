@@ -143,10 +143,11 @@ stream dt source mnotes = do
   play [source]
 
   --
-  forM (cycle [primero, segundo]) $ \buffer -> do
-    playing <- liftM takeplaying $ readMVar mnotes
+  forM (cycle [segundo, primero]) $ \buffer -> do
+    nextbatch buffer
+    unqueueBuffers source 1
     queueBuffers source [buffer]
-    threadDelay . floor $ dt * 10^6
+    -- threadDelay . floor $ dt * 10^6
   return ()
   where
     takeplaying = findIndices id
