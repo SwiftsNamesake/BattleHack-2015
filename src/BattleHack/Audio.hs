@@ -119,23 +119,43 @@ mix = map sum
 
 -- |
 -- TODO: Streamer type (?)
--- TODO: Pause, resumse, stop
+-- TODO: Pause, resume, stop
+-- TODO: Set looping mode
+-- TODO: Who has the control (use timer, or block via mvar?)
 -- TODO: 'Double-buffering'
 -- TODO: In what order are buffers removed and queued (?)
 -- TODO: What happens when the same buffer is queued multiple times
--- TODO: What are OpenAL buffers specifiaclly, what happens when you write to a queued buffer (?)
+-- TODO: What are OpenAL buffers specifically, what happens when you write to a queued buffer (?)
 -- TODO: Do you have to align sine waves properly (ie. line up the periods) (?)
--- TODO: Set looping mode
+-- TODO: Do I have to free memory manually (?)
+-- TODO: Generalise (eg. any frame type, any container besides lists, any number of buffers, etc.)
+-- TODO: Use frame count instead of dt (more precise) (?)
+-- https://hackage.haskell.org/package/OpenAL-1.7.0.1/docs/Sound-OpenAL-AL-Source.html
+-- stream :: Double -> Source -> (a -> [[CInt]]) -> MVar a -> IO ()
 stream :: Double -> Source -> MVar [Bool] -> IO ()
-stream dt source notes = do
+stream dt source mnotes = do
+
+  --
   [primero, segundo] <- genObjectNames 2 --
+
+  --
+  nextbatch primero
+  play [source]
+
+  --
   forM (cycle [primero, segundo]) $ \buffer -> do
-    playing <- liftM takeplaying $ readMVar notes
+    playing <- liftM takeplaying $ readMVar mnotes
     queueBuffers source [buffer]
     threadDelay . floor $ dt * 10^6
   return ()
   where
     takeplaying = findIndices id
+    format      = Mono16
+    mixnotes    = mix . map (take (numSamples dt) . sine . Piano.pitchFromKeyIndex)
+    nextbatch buffer = do
+      presses <- takeplaying <$> readMVar mnotes
+      fillbufferWithSamples buffer format . mixnotes $ presses
+      queueBuffers source [buffer]
 
 
 -- Control ---------------------------------------------------------------------------------------------------------------------------------
@@ -155,15 +175,23 @@ stopnote keyboard i = stop [fst $ keyboard !! i]
 -- |
 -- TODO: Simplify
 -- TODO: Don't hard-code format
+-- TODO: Let fillbuffer take care of the pointer stuff
 makebuffer :: [Double] -> IO Buffer
 makebuffer samples = do
   [buffer] <- genObjectNames 1
+  fillbufferWithSamples buffer format samples
+  where
+    format = Mono16
+
+
+-- |
+-- TODO: Take a closer look at pcm (eg. why 16?)
+fillbufferWithSamples :: Buffer -> Format -> [Double] -> IO Buffer
+fillbufferWithSamples buffer format samples = do
   mutvec <- V.thaw . V.fromList . map (pcm 16) $ samples
   imm <- V.freeze mutvec
   let (memory, size) = V.unsafeToForeignPtr0 imm in fillbuffer buffer format memory (fromIntegral size)
   return buffer
-  where
-    format = Mono16
 
 
 -- |
