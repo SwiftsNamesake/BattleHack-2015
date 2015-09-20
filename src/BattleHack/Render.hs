@@ -38,6 +38,7 @@ import BattleHack.Types
 import BattleHack.Lenses
 import BattleHack.Utilities.Vector
 import BattleHack.Utilities.General
+import BattleHack.Utilities.Math
 import qualified BattleHack.Piano as Piano
 
 
@@ -80,21 +81,19 @@ key piano i = do
 -- |
 keylabel :: PianoSettings -> Int -> Cairo.Render ()
 keylabel piano i = do
-  -- vectorise Cairo.moveTo (Piano.keyorigin piano i + 0.9*(0:+piano-->keysize-->imag)) -- $ (piano-->origin) + dotwise (*) (piano-->keysize) (0.5:+0.8) -- ((piano-->keysize.real)/2:+(piano-->keysize.imag * 0.8))
-  let (o, sz) = Piano.keybounds piano (Piano.keylayout i)
-  -- vectorise Cairo.moveTo (Piano.keyorigin piano i + o + dotwise (*) sz (0.5:+0.95))
-  -- vectorise Cairo.moveTo (20:+20)
   Cairo.setFontSize (if (i `mod` 12) `elem` Piano.naturals then 48 else 22)
   Cairo.selectFontFace "Old English" Cairo.FontSlantNormal Cairo.FontWeightNormal
   Cairo.setSourceRGBA 0.20 0.12 0.08 1.00
   centredText (Piano.keyorigin piano i + o + dotwise (*) sz (0.5:+0.90)) (Piano.notenameFromKeyIndex i)
+  where
+    (o, sz) = Piano.keybounds piano (Piano.keylayout i)
 
 
 -- |
 claviature :: PianoSettings -> Cairo.Render ()
 claviature settings = do
-  forM_ (zipWith const [0..] (settings-->keys)) $ \ikey -> do
-    key settings ikey
+  forM_ (zipWith const [0..] (settings-->keys)) $ \i -> do
+    key settings i
 
 
 --------------------------------------------------------------------------------------------------------------------------------------------
@@ -153,27 +152,45 @@ centredText centre text = do
   Cairo.showText text
 
 
+-- Experiments  ----------------------------------------------------------------------------------------------------------------------------
+
+-- |
+radial :: AppState -> Cairo.Render ()
+radial appstate = Cairo.withRadialPattern a b c d e f $ \ pattern -> do
+  Cairo.patternAddColorStopRGBA pattern 0 1 1 1 1
+  Cairo.patternAddColorStopRGBA pattern 1 0 0 0 1
+  Cairo.setSource pattern
+  Cairo.arc mx my 76.8 0 (2*π)
+  Cairo.fill
+
+  Cairo.arc mx my 76.8 0 (2*π)
+  Cairo.setSourceRGBA 0.0 0.0 0.0 1.0
+  Cairo.setLineWidth  12
+  Cairo.stroke
+  where
+    (mx:+my) = appstate-->inputstate.mouse
+    [a, b, c, d, e, f] = [115.2, 102.4, 25.6, 102.4, 102.4, 128.0]
+
+
 -- Menu ------------------------------------------------------------------------------------------------------------------------------------
 
 -- |
-overlay :: Cairo.Render ()
-overlay = do
+overlay :: AppState -> Cairo.Render ()
+overlay appstate = do
   -- TODO: Writing animation
   -- Cairo.setOperator Cairo.OperatorDestIn
   Cairo.setFontSize 180
   Cairo.selectFontFace ("Verdana" :: String) Cairo.FontSlantNormal Cairo.FontWeightBold
   Cairo.setSourceRGBA 1.0 1.0 1.0 0.8
   -- centredText ((winx:+winy) * 0.5) "CHORDIAL"
-  Cairo.setLineWidth 12
-  size <- textsize "CUERDIAL"
-  vectorise Cairo.moveTo $ (winsize - size) * 0.5
+  -- Cairo.setLineWidth 12
+  size' <- textsize "CUERDIAL"
+  vectorise Cairo.moveTo $ (winsize - size') * 0.5
   Cairo.textPath "CUERDIAL"
   Cairo.clip
   -- Cairo.stroke
-
   where
-    origin'@(ox:+oy)  = 20:+20                 --
-    keysize'@(sx:+sy) = (4:+13) * 40           --
-    winsize           = ((sx*7:+sy) + 2*origin') --
+    winsize = dotwise (*) (appstate-->piano.keysize) (7:+1) + 2*(appstate-->piano.origin) -- TODO: Find canvas size directly
+
 
 -- Menu ------------------------------------------------------------------------------------------------------------------------------------

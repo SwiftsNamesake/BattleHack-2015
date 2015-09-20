@@ -56,6 +56,7 @@ import BattleHack.Types
 import BattleHack.Lenses
 import BattleHack.Utilities.General
 import BattleHack.Utilities.Vector
+import BattleHack.Utilities.Math
 import qualified BattleHack.Piano  as Piano
 import qualified BattleHack.Audio  as Audio
 import qualified BattleHack.Render as Render
@@ -77,17 +78,19 @@ onanimate canvas stateref = do
 ondraw :: IORef AppState -> Cairo.Render ()
 ondraw stateref = do
   appstate <- Cairo.liftIO $ readIORef stateref
-  Render.overlay
+  -- Render.overlay    $ appstate         --
   Render.claviature $ appstate-->piano --
   Render.debugHUD   $ appstate         --
+  -- Render.radial     $ appstate         --
   -- Render.sinewave   $ appstate         -- Just for shits and giggles
 
 
 -- |
 ondelete :: IORef AppState -> EventM EAny Bool
-ondelete stateref = do
-  Cairo.liftIO $ putStrLn "Good bye"
-  Cairo.liftIO $ mainQuit >> return False
+ondelete stateref = Cairo.liftIO $ do
+  putStrLn "Good bye"
+  mainQuit
+  return False
 
 
 -- |
@@ -122,7 +125,6 @@ onmouseup stateref = do
   -- source <- Cairo.liftIO $ liftM _source $ readIORef stateref
   Cairo.liftIO $ do
     appstate <- readIORef stateref
-    -- Cairo.liftIO $ Audio.stopall source
     perhaps pass (appstate-->piano.active) $ \i -> void $ Audio.stopnote (appstate-->claviature) i
   return False
 
@@ -143,7 +145,7 @@ onwheelscrool stateref = do
 -- TODO: Helpers for updating state, checking repeats
 onkeydown :: IORef AppState -> EventM EKey Bool
 onkeydown stateref = do
-  key <- liftM T.unpack eventKeyName -- TODO: Use key val?
+  key <- T.unpack <$> eventKeyName -- TODO: Use key val?
 
   Cairo.liftIO $ do
     -- Do yourself a favour and pretend you never saw this mess
@@ -159,18 +161,15 @@ onkeydown stateref = do
         appstate <- readIORef stateref
         modifyIORef stateref (piano.keys.ix i .~ True)
         void $ Audio.playnote (appstate-->claviature) i
-        -- void . forkIO $ Audio.note (_source appstate) (Piano.pitchFromKeyIndex iactive) 1.0 -- TODO: Do not hard code duration
 
   return False
-  -- where
-  --   setactive key = piano.active .~ noteIndexFromKey key
 
 
 -- |
 -- TODO: Implement note press and release properly
 onkeyup :: IORef AppState -> EventM EKey Bool
 onkeyup stateref = do
-  key <- liftM T.unpack eventKeyName -- TODO: Use key val?
+  key <- T.unpack <$> eventKeyName -- TODO: Use key val?
   Cairo.liftIO $ do
     appstate <- readIORef stateref
     modifyIORef stateref (inputstate.keyboard %~ S.delete key) -- Mark key as pressed

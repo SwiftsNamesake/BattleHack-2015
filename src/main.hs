@@ -13,6 +13,9 @@
 --        - Audio!
 --        - 3D audio (move listener around)
 --        - Serialisation
+--        - IO Lenses (?)
+--        - Better way of dealing with state, sharing IO resources
+--        - Restrict access to AppState, 'fenced off' IORefs
 
 
 

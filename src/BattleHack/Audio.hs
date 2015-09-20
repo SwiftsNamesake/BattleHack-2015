@@ -154,16 +154,21 @@ stopnote keyboard i = stop [fst $ keyboard !! i]
 
 -- |
 -- TODO: Simplify
+-- TODO: Don't hard-code format
 makebuffer :: [Double] -> IO Buffer
 makebuffer samples = do
   [buffer] <- genObjectNames 1
   mutvec <- V.thaw . V.fromList . map (pcm 16) $ samples
   imm <- V.freeze mutvec
-  let (memory, size) = V.unsafeToForeignPtr0 imm in fillbuffer buffer memory (fromIntegral size)
+  let (memory, size) = V.unsafeToForeignPtr0 imm in fillbuffer buffer format memory (fromIntegral size)
   return buffer
   where
     format = Mono16
-    fillbuffer buffer mem size = withForeignPtr mem $ \ptr -> bufferData buffer $= BufferData (MemoryRegion (ptr :: Ptr CInt) size) format sampleRate -- TODO: Factor out
+
+
+-- |
+fillbuffer :: Buffer -> Format -> ForeignPtr CInt -> ALsizei -> IO ()
+fillbuffer buffer format mem size = withForeignPtr mem $ \ptr -> bufferData buffer $= BufferData (MemoryRegion (ptr :: Ptr CInt) size) format sampleRate -- TODO: Factor out
 
 
 -- |
