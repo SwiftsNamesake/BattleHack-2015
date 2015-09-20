@@ -75,7 +75,8 @@ executable BattleHack2015
                        vector,
                        text,
                        aeson,
-                       containers
+                       containers,
+                       monad-loops >=0.4
 
   -- Directories containing source files.
   hs-source-dirs:      src

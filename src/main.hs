@@ -35,7 +35,7 @@ module Main where
 --------------------------------------------------------------------------------------------------------------------------------------------
 -- We'll need these
 --------------------------------------------------------------------------------------------------------------------------------------------
-import Control.Monad      (forM_, when, forever)
+import Control.Monad      (forM_, when, forever, liftM)
 import Control.Concurrent (threadDelay, forkIO)
 import Control.Concurrent.MVar
 import Text.Printf
@@ -75,21 +75,32 @@ main = do
   -- Audio
   -- TODO: Utility function for accessing range indeces
   -- TODO: Don't hard-code range
-  Just (context, device) <- Audio.setup -- TODO: Return context as well (probably a good idea) (✓)
-  [source] <- genObjectNames 1
+  -- TODO: Check for errors
+  -- Just (context, device) <- Audio.setup -- TODO: Return context as well (probably a good idea) (✓)
+  -- [source] <- genObjectNames 1
   -- claviature'            <- Audio.makebuffersFromIndeces (zipWith const [0..] $ replicate 24 False)
 
   -- App state
   stateref <- newIORef (initalstate 24 origin' keysize') -- claviature')
 
-  --
-  mnotes <- newMVar . (-->piano.keys) <$> readIORef stateref
 
-  forkIO $ Audio.stream (1.0/30.0) source mnotes
+  --
+  -- mnotes <- newMVar . (-->piano.keys) <$> readIORef stateref
+  mnotes <- readIORef stateref >>= (newMVar . (-->piano.keys))
+  -- mnotes <- return [True, True, False, True] >>= newMVar -- (newMVar . (-->piano.keys))
+
+  -- forkIO $ Audio.stream (1.0/30.0) source mnotes
+  let audiofps = 5
+
+  forkIO $ Audio.stream (1.0/audiofps) mnotes
 
   forkIO $ forever $ do
-    putMVar mnotes . (-->piano.keys) <$> readIORef stateref
-    threadDelay $ (1.0/30.0) * 10^6
+    putStrLn "New write iteration"
+    playing <- (-->piano.keys) <$> readIORef stateref
+    putMVar mnotes playing
+    threadDelay . ceiling $ (1.0/audiofps) * 10^6
+    printf "Next batch coming up!\n"
+    printf "These notes: %s.\n\n\n\n" (show playing)
 
   -- Register event handlers
   Window.bindevents window canvas stateref

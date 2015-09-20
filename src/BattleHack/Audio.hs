@@ -35,12 +35,15 @@ module BattleHack.Audio where
 -- We'll need these
 --------------------------------------------------------------------------------------------------------------------------------------------
 import Data.Maybe                        --
-import Data.List  (findIndices)          --
+import Data.List  (findIndices, transpose)          --
 import Foreign hiding (void)             -- Import the foreigners!
 import Foreign.C.Types                   --
-import Control.Monad (liftM, void, forM) --
 import Control.Concurrent                --
 import Control.Applicative               --
+import Control.Monad (liftM, void, forM, when) --
+import Control.Monad.Loops
+
+import Text.Printf
 
 import qualified Data.Vector.Storable         as V
 import qualified Data.Vector.Storable.Mutable as VM
@@ -113,7 +116,8 @@ sine freq = cycle . take n $ map sin [0, d..]
 
 -- |
 mix :: RealFloat r => [[r]] -> [r]
-mix = map sum
+-- mix = map sum
+mix = map (min 1.0 . sum)
 
 -- Streaming -------------------------------------------------------------------------------------------------------------------------------
 
@@ -132,31 +136,68 @@ mix = map sum
 -- TODO: Use frame count instead of dt (more precise) (?)
 -- https://hackage.haskell.org/package/OpenAL-1.7.0.1/docs/Sound-OpenAL-AL-Source.html
 -- stream :: Double -> Source -> (a -> [[CInt]]) -> MVar a -> IO ()
-stream :: Double -> Source -> MVar [Bool] -> IO ()
-stream dt source mnotes = do
+-- stream :: Double -> Source -> MVar [Bool] -> IO ()
+stream :: Double -> MVar [Bool] -> IO ()
+stream dt mnotes = do
+
+  -- Maybe we have to init OpenAL in this thread?
+  printf "Entering streaming function.\n"
+  Just (context, device) <- setup -- TODO: Return context as well (probably a good idea) (✓)
+  [source] <- genObjectNames 1
 
   --
   [primero, segundo] <- genObjectNames 2 --
+  print primero
+  print segundo
 
   --
-  nextbatch primero
-  play [source]
+  nextbatch source primero
+  -- play [source]
+
+  -- loopingMode source $= Looping
 
   --
-  forM (cycle [segundo, primero]) $ \buffer -> do
-    nextbatch buffer
-    unqueueBuffers source 1
-    queueBuffers source [buffer]
+  when True $ do
+    forM (cycle [segundo, primero]) $ \buffer -> do
+      putStrLn "New streaming iteration"
+      nextbatch source buffer
+      -- stop [source]
+      -- queueBuffers source [buffer]
+      -- play [source]
+      putStrLn "Status:"
+      nprocessed <- get (buffersProcessed source)
+      print nprocessed
+      nqueued <- get (buffersQueued source)
+      print nqueued
+
+      old <- unqueueBuffers source nprocessed
+      print (primero, segundo, old, buffer)
+      -- print . fromIntegral <$> get (buffersProcessed source)
+      -- print . fromIntegral <$> get (buffersQueued source)
+      -- old <- unqueueBuffers source 1
+      -- print $ old == [buffer]
+      -- print $ old
+      -- play [source]
     -- threadDelay . floor $ dt * 10^6
+    return ()
   return ()
   where
     takeplaying = findIndices id
     format      = Mono16
-    mixnotes    = mix . map (take (numSamples dt) . sine . Piano.pitchFromKeyIndex)
-    nextbatch buffer = do
-      presses <- takeplaying <$> readMVar mnotes
-      fillbufferWithSamples buffer format . mixnotes $ presses
+    mixnotes [] = replicate (numSamples dt) 0
+    mixnotes n  = mix . take (numSamples dt) . transpose . map (sine . Piano.pitchFromKeyIndex) $ n
+    -- mixnotes    = mix . take (numSamples dt) . transpose . map (sine . Piano.pitchFromKeyIndex) . take 1
+    -- mixnotes = map sin . map Piano.pitchFromKeyIndex
+    -- mixnotes    = (take (numSamples dt) . sine . Piano.pitchFromKeyIndex) . head
+    nextbatch source buffer = do
+      putStrLn "Processing batch"
+      presses <- take 1 . takeplaying <$> takeMVar mnotes
+      -- presses <- takeplaying <$> return [False, False, False, False, True, False, False, False, True]
+      printf "Mixing %d notes.\n" (length presses)
+      -- print $ mixnotes $ presses
+      fillbufferWithSamples buffer format $ mixnotes presses
       queueBuffers source [buffer]
+      play [source]
 
 
 -- Control ---------------------------------------------------------------------------------------------------------------------------------
