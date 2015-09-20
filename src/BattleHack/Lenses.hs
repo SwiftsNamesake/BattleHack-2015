@@ -142,10 +142,10 @@ imag f (x:+y) = (x:+) <$> f y
 -- | Like real, except the new type is also a vector.
 -- TODO: Better name (?)
 real' :: Num n => Lens (Complex n) (Complex n) (Complex n) (Complex n)
-real' f (x:+y) = id <$> f (x:+0)
+real' f (x:+_) = id <$> f (x:+0)
 
 
 -- | Like imag, except the new type is also a vector.
 -- TODO: Better name (?)
 imag' :: Num n => Lens (Complex n) (Complex n) (Complex n) (Complex n)
-imag' f (x:+y) = id <$> f (0:+y)
+imag' f (_:+y) = id <$> f (0:+y)

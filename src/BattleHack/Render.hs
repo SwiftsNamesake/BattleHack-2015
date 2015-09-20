@@ -165,9 +165,9 @@ overlay = do
   Cairo.setSourceRGBA 1.0 1.0 1.0 0.8
   -- centredText ((winx:+winy) * 0.5) "CHORDIAL"
   Cairo.setLineWidth 12
-  size <- textsize "CUERDA"
+  size <- textsize "CUERDIAL"
   vectorise Cairo.moveTo $ (winsize - size) * 0.5
-  Cairo.textPath "CUERDA"
+  Cairo.textPath "CUERDIAL"
   Cairo.clip
   -- Cairo.stroke
 

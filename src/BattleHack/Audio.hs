@@ -163,7 +163,7 @@ makebuffer samples = do
   return buffer
   where
     format = Mono16
-    fillbuffer buffer mem size = withForeignPtr mem $ \ptr -> bufferData buffer $= BufferData (MemoryRegion (ptr :: Ptr CInt) size) format sampleRate
+    fillbuffer buffer mem size = withForeignPtr mem $ \ptr -> bufferData buffer $= BufferData (MemoryRegion (ptr :: Ptr CInt) size) format sampleRate -- TODO: Factor out
 
 
 -- |
